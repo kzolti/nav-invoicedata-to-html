@@ -1,0 +1,665 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{t "invoice"}}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2em; } 
+      h2 { margin-top: 2em; } 
+      h3 { margin-top: 1.5em; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 2em; } 
+      th, td { border: 1px solid #ccc; padding: 6px 10px; } 
+      th { background: #f0f0f0; }
+      .subtable { margin-left: 2em; width: calc(100% - 2em); }
+      .text-right { text-align: right; }
+      .smaller-text { font-size: 0.85em; color: #666; }
+    </style>
+  </head>
+  <body>
+    
+  
+
+  {{#* inline "PrintInvoice"}}
+    {{!-- Helper functions passed to the partial --}}
+    {{#with invoice as |invoice|}}
+      {{#let (eq invoice.invoiceHead.invoiceDetail.invoiceCategory "SIMPLIFIED") as |isSimplified|}}
+        <h1><center> {{t "invoice"}}</center></h1>
+        {{!-- Módosítás adatai --}}
+        {{#if invoice.invoiceReference}}
+          <h2>{{t "invoiceReference"}}</h2>
+          <table>
+            <tr>
+              <td>{{t "originalInvoiceNumber"}}</td>
+              <td>{{invoice.invoiceReference.originalInvoiceNumber}}</td>
+            </tr>
+            <tr>
+              <td>{{t "modifyWithoutMaster"}}</td>
+              <td>{{invoice.invoiceReference.modifyWithoutMaster}}</td>
+            </tr>
+            <tr>
+              <td>{{t "modificationIndex"}}</td>
+              <td>{{invoice.invoiceReference.modificationIndex}}</td>
+            </tr>
+          </table>
+        {{/if}}  
+
+        <!-- Szállító adatai -->
+        <h2>{{t "supplier"}}</h2>
+        <table>
+          <tr><td>{{t "name"}}</td><td>{{invoice.invoiceHead.supplierInfo.supplierName}}</td></tr>
+          <tr><td>{{t "taxNumber"}}</td>
+            <td>{{invoice.invoiceHead.supplierInfo.supplierTaxNumber.taxpayerId}}-{{invoice.invoiceHead.supplierInfo.supplierTaxNumber.vatCode}}-{{invoice.invoiceHead.supplierInfo.supplierTaxNumber.countyCode}}</td></tr>
+          {{#if invoice.invoiceHead.supplierInfo.groupMemberTaxNumber}}
+            <tr><td>{{t "groupMemberTaxNumber"}}</td><td>{{invoice.invoiceHead.supplierInfo.groupMemberTaxNumber}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.supplierInfo.communityVatNumber}}
+            <tr><td>{{t "communityVatNumber"}}</td><td>{{invoice.invoiceHead.supplierInfo.communityVatNumber}}</td></tr>
+          {{/if}}
+          <tr><td>{{t "address"}}</td><td>{{formatAddress invoice.invoiceHead.supplierInfo.supplierAddress}}</td></tr>
+          {{#if invoice.invoiceHead.supplierInfo.supplierBankAccountNumber}}
+            <tr><td>{{t "bankAccount"}}</td><td>{{invoice.invoiceHead.supplierInfo.supplierBankAccountNumber}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.supplierInfo.individualExemption}}
+            <tr><td>{{t "individualExemption"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.supplierInfo.exciseLicenceNum}}
+            <tr><td>{{t "exciseLicenceNum"}}</td><td>{{invoice.invoiceHead.supplierInfo.exciseLicenceNum}}</td></tr>
+          {{/if}}
+        </table>
+
+        <!-- Vevő adatai -->
+        {{#if invoice.invoiceHead.customerInfo}}
+          <h2>{{t "customer"}}</h2>
+          <table>
+            <tr><td>{{t "customerVatStatus"}}</td><td>{{t (concat "CustomerVatStatusType_" invoice.invoiceHead.customerInfo.customerVatStatus)}}</td></tr>
+            {{#if invoice.invoiceHead.customerInfo.customerName}}
+              <tr><td>{{t "name"}}</td><td>{{invoice.invoiceHead.customerInfo.customerName}}</td></tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.customerInfo.customerVatData}}
+              {{#if invoice.invoiceHead.customerInfo.customerVatData.customerTaxNumber}}
+                <tr><td>{{t "taxNumber"}}</td>
+                  <td>{{invoice.invoiceHead.customerInfo.customerVatData.customerTaxNumber.taxpayerId}}-{{invoice.invoiceHead.customerInfo.customerVatData.customerTaxNumber.vatCode}}-{{invoice.invoiceHead.customerInfo.customerVatData.customerTaxNumber.countyCode}}</td></tr>
+              {{/if}}
+              {{#if invoice.invoiceHead.customerInfo.customerVatData.communityVatNumber}}
+                <tr><td>{{t "communityVatNumber"}}</td><td>{{invoice.invoiceHead.customerInfo.customerVatData.communityVatNumber}}</td></tr>
+              {{/if}}
+              {{#if invoice.invoiceHead.customerInfo.customerVatData.thirdStateTaxId}}
+                <tr><td>{{t "thirdStateTaxId"}}</td><td>{{invoice.invoiceHead.customerInfo.customerVatData.thirdStateTaxId}}</td></tr>
+              {{/if}}
+            {{/if}}
+            {{#if invoice.invoiceHead.customerInfo.customerAddress}}
+              <tr><td>{{t "address"}}</td><td>{{formatAddress invoice.invoiceHead.customerInfo.customerAddress}}</td></tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.customerInfo.customerBankAccountNumber}}
+              <tr><td>{{t "bankAccount"}}</td><td>{{invoice.invoiceHead.customerInfo.customerBankAccountNumber}}</td></tr>
+            {{/if}}
+          </table>
+        {{/if}}
+
+        <!-- Pénzügyi képviselő adatai -->
+        {{#if invoice.invoiceHead.fiscalRepresentativeInfo}}
+          <h3>{{t "fiscalRepresentative"}}</h3>
+          <table class="subtable">
+            <tr><td>{{t "name"}}</td><td>{{invoice.invoiceHead.fiscalRepresentativeInfo.fiscalRepresentativeName}}</td></tr>
+            <tr><td>{{t "taxNumber"}}</td><td>{{invoice.invoiceHead.fiscalRepresentativeInfo.fiscalRepresentativeTaxNumber}}</td></tr>
+            <tr><td>{{t "address"}}</td><td>{{formatAddress invoice.invoiceHead.fiscalRepresentativeInfo.fiscalRepresentativeAddress}}</td></tr>
+            {{#if invoice.invoiceHead.fiscalRepresentativeInfo.fiscalRepresentativeBankAccountNumber}}
+              <tr><td>{{t "bankAccount"}}</td><td>{{invoice.invoiceHead.fiscalRepresentativeInfo.fiscalRepresentativeBankAccountNumber}}</td></tr>
+            {{/if}}
+          </table>
+        {{/if}}
+
+        <!-- Számla fej adatok -->
+        <h2>{{t "invoiceDetail"}}</h2>
+        <table>
+          <tr><td>{{t "invoiceNumber"}}</td><td>{{@root.InvoiceData.invoiceNumber}}</td></tr>
+          <tr><td>{{t "invoiceCategory"}}</td><td>{{t (concat "InvoiceCategoryType_" invoice.invoiceHead.invoiceDetail.invoiceCategory)}}</td></tr>
+          {{#if invoice.invoiceHead.invoiceDetail.invoiceDeliveryPeriodStart}}
+            <tr><td>{{t "invoiceDeliveryPeriod"}}</td>
+              <td>{{formatDate invoice.invoiceHead.invoiceDetail.invoiceDeliveryPeriodStart}} - {{formatDate invoice.invoiceHead.invoiceDetail.invoiceDeliveryPeriodEnd}}</td></tr>
+          {{/if}}
+          <tr><td>{{t "invoiceIssueDate"}}</td><td>{{formatDate @root.InvoiceData.invoiceIssueDate}}</td></tr>
+          <tr><td>{{t "invoiceDeliveryDate"}}</td><td>{{formatDate invoice.invoiceHead.invoiceDetail.invoiceDeliveryDate}}</td></tr>
+          {{#if invoice.invoiceHead.invoiceDetail.invoiceAccountingDeliveryDate}}
+            <tr><td>{{t "invoiceAccountingDeliveryDate"}}</td><td>{{formatDate invoice.invoiceHead.invoiceDetail.invoiceAccountingDeliveryDate}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.paymentMethod}}
+            <tr><td>{{t "paymentMethod"}}</td><td>{{t (concat "PaymentMethodType_" invoice.invoiceHead.invoiceDetail.paymentMethod)}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.paymentDate}}
+            <tr><td>{{t "paymentDate"}}</td><td>{{formatDate invoice.invoiceHead.invoiceDetail.paymentDate}}</td></tr>
+          {{/if}}
+          <tr><td>{{t "currencyCode"}}</td><td>{{invoice.invoiceHead.invoiceDetail.currencyCode}}</td></tr>
+          <tr><td>{{t "invoiceAppearance"}}</td><td>{{t invoice.invoiceHead.invoiceDetail.invoiceAppearance}}</td></tr>
+          {{#if invoice.invoiceHead.invoiceDetail.periodicalSettlement}}
+            <tr><td>{{t "periodicalSettlement"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.smallBusinessIndicator}}
+            <tr><td>{{t "smallBusinessIndicator"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.utilitySettlementIndicator}}
+            <tr><td>{{t "utilitySettlementIndicator"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.selfBillingIndicator}}
+            <tr><td>{{t "selfBillingIndicator"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#if invoice.invoiceHead.invoiceDetail.cashAccountingIndicator}}
+            <tr><td>{{t "cashAccountingIndicator"}}</td><td>{{t "yes"}}</td></tr>
+          {{/if}}
+          {{#unless  (eq invoice.invoiceHead.invoiceDetail.exchangeRate "1")}}
+            <tr>
+              <td>{{t "exchangeRate"}}</td>
+              <td>
+                1 {{invoice.invoiceHead.invoiceDetail.currencyCode}} = {{invoice.invoiceHead.invoiceDetail.exchangeRate}} HUF
+              </td>
+            </tr>
+          {{/unless}}
+        </table>
+        {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo}}
+          <h3>{{t "conventionalInfo"}}</h3>
+          <table>
+            {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.orderNumbers}}
+              <tr>
+                <td>{{t "orderNumbers"}}</td>
+                <td>{{join invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.orderNumbers.orderNumber ", "}}</td>
+              </tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.ekaerIds}}
+              <tr>
+                <td>{{t "ekaerIds"}}</td>
+                <td>{{join invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.ekaerIds.ekaerId ", "}}</td>
+              </tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.deliveryNotes}}
+            <tr><td>{{t "deliveryNotes"}}</td><td>{{join invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.deliveryNotes.deliveryNote ", "}}</td></tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.shippingDates}}
+              <tr><td>{{t "shippingDates"}}</td><td>{{join invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.shippingDates.shippingDate ", "}}</td></tr>
+            {{/if}}
+            {{#if invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.contractNumbers}}
+              <tr><td>{{t "contractNumbers"}}</td><td>{{join invoice.invoiceHead.invoiceDetail.conventionalInvoiceInfo.contractNumbers.contractNumber ", "}}</td></tr>
+            {{/if}}
+          </table>
+        {{/if}}
+
+        <!-- További számlaadatok -->
+        {{#if invoice.invoiceHead.invoiceDetail.additionalInvoiceData}}
+          
+          <table >
+            {{#each invoice.invoiceHead.invoiceDetail.additionalInvoiceData}}
+              <tr><td>{{dataName}}</td><td>{{dataDescription}}: {{dataValue}}</td></tr>
+            {{/each}}
+          </table>
+        {{/if}}
+
+        
+
+        <!-- Tételek -->
+              <!-- Tételek táblázata -->
+        <h2>{{t "items"}}</h2>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>{{t "description"}}</th>
+            {{#unless isSimplified}}
+              <th>{{t "productCode"}}</th>
+            {{/unless}}
+            <th>{{t "quantity"}}</th>
+            <th>{{t "unitOfMeasure"}}</th>
+            <th>{{t "unitPrice"}}</th>
+            {{#unless isSimplified}}
+              <th>{{t "net"}}</th>
+              <th>{{t "vatRate"}}</th>
+              <th>{{t "vat"}}</th>
+            {{/unless}}
+            {{#if isSimplified}}
+              <th>{{t "vatContent"}}</th>
+            {{/if}}
+            <th>
+                {{t "gross"}}
+            </th>
+          </tr>
+          {{#each invoice.invoiceLines.line}}
+            <tr>
+              <td>{{lineNumber}}</td>
+              <td style="vertical-align: middle; position: relative; padding-bottom: 1.5em;">
+                <div>{{lineDescription}}</div>
+                {{#if lineNatureIndicator}} 
+                  <div class="smaller-text" style="position: absolute; bottom: 0;">({{t lineNatureIndicator}})</div>
+                {{/if}}
+              </td>
+              {{#unless isSimplified}}
+                <td style="height: 1px;">
+                  {{#if productCodes}}
+                    {{#each productCodes.productCode}}
+                      {{#if productCodeOwnValue}}
+                        <div style="height: calc(50% + 0.5em); display: flex; align-items: flex-end;">{{productCodeOwnValue}}</div>
+                        <div class="smaller-text" style="height: calc(50% - 0.5em); display: flex; align-items: flex-end;">{{t (concat "ProductCodeCategoryType_" productCodeCategory)}}</div>
+                      {{else}}
+                        <div>
+                          {{productCodeValue}}
+                        </div>
+                        <div class="smaller-text" style="height: auto; display: flex; align-items: flex-end;">{{t (concat "ProductCodeCategoryType_" productCodeCategory)}}</div>
+                      {{/if}}
+                      {{#unless @last}}, {{/unless}}
+                    {{/each}}
+                  {{/if}}
+                </td>
+              {{/unless}}
+              <td class="text-right">{{formatNumber quantity}}</td>
+                {{#if (eq unitOfMeasure "OWN")}}
+                  <td style="height: 1px;">
+                    <div style="height: calc(50% + 0.5em); display: flex; align-items: flex-end;">
+                        {{unitOfMeasureOwn}}
+                    </div>
+                    {{#if unitOfMeasureOwn}} 
+                      <div class="smaller-text" style="height: auto; display: flex; align-items: flex-end;">
+                      {{t unitOfMeasure}}
+                      </div>
+                    {{/if}}
+                  </td>
+                {{else}}
+                  <td>{{unitOfMeasure}}</td>
+                {{/if}}
+              <td class="text-right">{{formatNumber unitPrice}}</td>
+              {{#unless isSimplified}}
+                <td class="text-right">{{formatNumber lineAmountsNormal.lineNetAmountData.lineNetAmount}}</td>
+                <td>
+                  {{#if lineAmountsNormal.lineVatRate.vatPercentage}}
+                    {{multiply lineAmountsNormal.lineVatRate.vatPercentage 100}}%
+                  {{else if lineAmountsNormal.lineVatRate.marginSchemeIndicator}}
+                    {{t lineAmountsNormal.lineVatRate.marginSchemeIndicator}}
+                  {{else if lineAmountsNormal.lineVatRate.vatDomesticReverseCharge}}
+                    {{t "vatDomesticReverseCharge"}}
+                  {{else if lineAmountsNormal.lineVatRate.vatExemption}}
+                    {{#if lineAmountsNormal.lineVatRate.vatExemption.case}} {{lineAmountsNormal.lineVatRate.vatExemption.case}}
+                    {{/if}}
+                    {{#if lineAmountsNormal.lineVatRate.vatExemption.reason}} -{{lineAmountsNormal.lineVatRate.vatExemption.reason}}{{/if}}
+                    <div class="smaller-text">
+
+                    {{t "vatExemption"}} ({{lineAmountsNormal.lineVatRate.vatExemption.case}})
+                    </div>
+                  {{else if lineAmountsNormal.lineVatRate.vatOutOfScope}}
+                    {{t "vatOutOfScope"}} ({{lineAmountsNormal.lineVatRate.vatOutOfScope.case}})
+                  {{/if}}
+                </td>
+                <td class="text-right">{{formatNumber lineAmountsNormal.lineVatData.lineVatAmount}}</td>
+              {{/unless}}
+              {{#if isSimplified}}
+                <td class="text-right">
+                  {{#if lineAmountsSimplified.lineVatRate.vatContent}}
+                  {{formatNumber (multiply lineAmountsSimplified.lineVatRate.vatContent 100)}}%
+                  {{/if}}
+                </td>
+                <td class="text-right">
+                  {{formatNumber lineAmountsSimplified.lineGrossAmountSimplified}}
+                </td>
+              {{else}}
+                <td class="text-right">
+                  {{formatNumber lineAmountsNormal.lineGrossAmountData.lineGrossAmountNormal}}
+                </td>
+              {{/if}}
+            </tr>
+
+            {{!-- Hivatkozások kapcsolódó tételekre --}}
+            {{#if referencesToOtherLines}}
+              <tr>
+                <td colspan="10">
+                  <table class="subtable">
+                    <tr>
+                      <td>{{t "referencesToOtherLines"}}</td>
+                      <td>{{join referencesToOtherLines.referenceToOtherLine ", "}}</td>
+                    </tr>
+                  </table>
+                </td>
+            {{/if}}
+
+            <!-- AggregateInvoiceLineData megjelenítése ha van -->
+            {{#if aggregateInvoiceLineData}}
+            <tr>
+              <td colspan="10">
+                  <table class="subtable">
+                    <tr><th colspan="2">{{t "aggregateInvoiceLineData"}}</th></tr>
+                    {{#if aggregateInvoiceLineData.lineDeliveryDate}}
+                      <tr>
+                        <td>{{t "deliveryDate"}}:</td>
+                        <td>{{formatDate aggregateInvoiceLineData.lineDeliveryDate}}</td>
+                      </tr>
+                    {{/if}}
+                    {{#unless (eq aggregateInvoiceLineData.lineExchangeRate "1")}}
+                      <tr>
+                        <td>{{t "exchangeRate"}}:</td>
+                        <td class="text-right">{{aggregateInvoiceLineData.lineExchangeRate}}</td>
+                      </tr>
+                    {{/unless}}
+                  </table>
+                </td>
+              </tr>
+            {{/if}}
+
+            <!-- AdditionalLineData megjelenítése ha van -->
+            {{#if additionalLineData}}
+            <tr>
+              <td colspan="10">
+                  <table class="subtable">
+                    <tr><th colspan="2">{{t "additionalData"}}</th></tr>
+                    {{#each additionalLineData}}
+                      <tr>
+                        <td>{{dataName}}:</td>
+                        <td>{{dataDescription}} - {{dataValue}}</td>
+                      </tr>
+                    {{/each}}
+                  </table>
+                </td>
+              </tr>
+            {{/if}}
+
+            {{!-- Tétel módosítása --}}
+            {{#if lineModificationReference}}
+              <tr>
+                <td colspan="10">
+                  <table class="subtable">
+                    <tr><th colspan="2">{{t "lineModification"}}</th></tr>
+                    {{#if lineModificationReference.lineNumberReference}}
+                      <tr>
+                        <td>{{t "lineModificationReference_lineNumberReference"}}</td>
+                        <td>{{lineModificationReference.lineNumberReference}}</td>
+                      </tr>
+                      <tr>
+                        <td>{{t "line_modification_type"}}</td>
+                        <td>{{lineModificationReference.lineOperation}}</td>
+                      </tr>
+                    {{/if}}
+                  </table>
+                </td>
+              </tr>
+            {{/if}}
+            <!-- Termékdíj megjelenítése ha van -->
+            {{#if lineProductFeeContent}}
+              <tr>
+                <td colspan="10">
+                  <table class="subtable">
+                    <tr>
+                      <th colspan="5">{{t "productFee"}}</th>
+                    </tr>
+                    <tr>
+                      <th>{{t "productFeeCode"}}</th>
+                      <th>{{t "quantity"}}</th>
+                      <th>{{t "unit"}}</th>
+                      <th>{{t "rate"}}</th>
+                      <th>{{t "amount"}}</th>
+                    </tr>
+                    {{#each lineProductFeeContent}}
+                      <tr>
+                        <td>
+                          {{#if productFeeCode.productCodeCategory}}
+                            <div>{{productFeeCode.productCodeCategory}}: {{productFeeCode.productCodeValue}}</div>
+                          {{/if}}
+                          {{#if productFeeCode.productCodeOwnValue}}
+                            <div>{{t productCodeOwnValue}}: {{productFeeCode.productCodeOwnValue}}</div>
+                          {{/if}}
+                        </td>
+                        <td class="text-right">{{formatNumber productFeeQuantity}}</td>
+                        <td class="text-center">{{t productFeeMeasuringUnit}}</td>
+                        <td class="text-right">{{formatNumber productFeeRate}}</td>
+                        <td class="text-right">{{formatNumber productFeeAmount}}</td>
+                      </tr>
+                    {{/each}}
+
+                    <!-- Termékdíj záradék megjelenítése -->
+                    {{#if productFeeClause}}
+                      <tr>
+                        <td colspan="6">
+                          <table class="inner-subtable">
+                            <!-- Termékdíj átvállalás -->
+                            {{#if productFeeClause.productFeeTakeoverData}}
+                            <th colspan="6">{{t "productFeeTakeoverData"}}</th>
+                              <tr>
+                                <td colspan="4">
+                                  <div>{{productFeeClause.productFeeTakeoverData.takeoverReason}}</div>
+                                  <div class="smaller-text">
+                                    {{t (concat "TakeoverType_" productFeeClause.productFeeTakeoverData.takeoverReason)}}
+                                  </div>
+                                </td>
+                                <td colspan="2" style="white-space: nowrap;">
+                                  {{#if productFeeClause.productFeeTakeoverData.takeoverAmount}}
+                                    {{t "amount"}}: {{formatNumber productFeeClause.productFeeTakeoverData.takeoverAmount}} HUF
+                                  {{/if}}
+                                </td>
+                              </tr>
+                            {{/if}}
+                            
+                            <!-- Vevő nyilatkozata -->
+                            {{#if productFeeClause.customerDeclaration}}
+                              <tr>
+                                <td colspan="4"><strong>{{t "customerDeclaration"}}</strong></td>
+                                <td colspan="2" style="white-space: nowrap;">
+                                  {{t productFeeClause.customerDeclaration.productStream}}:
+                                  {{#if productFeeClause.customerDeclaration.productFeeWeight}}
+                                    {{t "weight"}}: {{productFeeClause.customerDeclaration.productFeeWeight}} kg
+                                  {{/if}}
+                                </td>
+                              </tr>
+                            {{/if}}
+                          </table>
+                        </td>
+                      </tr>
+                    {{/if}}
+                  </table>
+                </td>
+              </tr>
+            {{/if}}
+
+            <!-- Előleg adatok megjelenítése ha van -->
+            {{#if advanceData}}
+              <tr>
+                <td colspan="10">
+                  <table class="subtable">
+                    {{#if (eq advanceData.advanceIndicator "true")}}
+                      <tr><th colspan="3">{{t "advancePayment"}}</th></tr>
+                    {{/if}}
+                    {{#if advanceData.advancePaymentData}}
+                      <tr>
+                        <td>{{t "originalInvoice"}}:</td>
+                        <td>{{advanceData.advancePaymentData.advanceOriginalInvoice}}</td>
+                      </tr>
+                      <tr>
+                        <td>{{t "paymentDate"}}:</td>
+                        <td>{{formatDate advanceData.advancePaymentData.advancePaymentDate}}</td>
+                      </tr>
+                      {{#unless  (eq invoice.invoiceHead.invoiceDetail.exchangeRate "1")}}
+                        <tr>
+                          <td>{{t "exchangeRate"}}:</td>
+                          <td>{{advanceData.advancePaymentData.advanceExchangeRate}}</td>
+                        </tr>
+                      {{/unless}}
+                    {{/if}}
+                  </table>
+                </td>
+              </tr>
+            {{/if}}
+          {{/each}}
+        </table>
+
+
+        <!-- Termékdíj összesítő -->
+        {{#if invoice.productFeeSummary}}
+          <h3>{{t "productFeeSummary"}}</h3>
+          <table>
+            <tr>
+              <th>{{t "productFeeOperation"}}</th>
+              <th>{{t "productFeeCode"}}</th>
+              <th>{{t "productFeeQuantity"}}</th>
+              <th>{{t "productFeeMeasuringUnit"}}</th>
+          <th>{{t "productFeeRate"}}</th>
+              <th>{{t "productFeeAmount"}}</th>
+            </tr>
+            {{#each invoice.productFeeSummary}}
+              {{#each productFeeData}}
+                <tr>
+                  <td>{{t ../productFeeOperation}}</td>
+                  <td>{{productFeeCode.productCodeValue}}</td>
+                  <td class="text-right">{{productFeeQuantity}}</td>
+                  <td>{{t productFeeMeasuringUnit}}</td>
+                  <td class="text-right">{{formatNumber productFeeRate}}</td>
+                  <td class="text-right">{{formatNumber productFeeAmount}}</td>
+                </tr>
+              {{/each}}
+              <tr>
+                <td colspan="5"><strong>{{t "productChargeSum"}}</strong></td>
+                <td class="text-right"><strong>{{formatNumber productChargeSum}}</strong></td>
+              </tr>
+            {{/each}}
+          </table>
+        {{/if}}
+
+
+        <!-- ÁFA összesítő -->
+        <h2>{{t "vatSummary"}}</h2>
+        <table>
+          <tr>
+            {{#if isSimplified}}
+              <th>{{t "gross"}}</th>
+              <th>{{t "vatContent"}}</th>
+            {{else}}
+              <th>{{t "vatRate"}}</th>
+              <th>{{t "net"}}</th>
+              <th>{{t "vat"}}</th>
+              <th>{{t "gross"}}</th>
+            {{/if}}
+          </tr>
+          {{#if isSimplified}}
+            {{#each invoice.invoiceSummary.summarySimplified}}
+              <tr>
+                <td class="text-right">{{formatNumber vatContentGrossAmount}}</td>
+                <td>
+                  {{#if vatRate.vatContent}}
+                  <div >
+                    {{formatNumber (multiply vatRate.vatContent 100)}}%
+                  </div>
+                  {{else if vatRate.vatExemption}}
+                    {{#if vatRate.vatExemption.case}} {{vatRate.vatExemption.case}}{{/if}}
+                    - {{#if vatRate.vatExemption.reason}} {{vatRate.vatExemption.reason}}{{/if}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatExemption"}} </div>
+                  {{else if vatRate.vatOutOfScope}}
+                    {{#if vatRate.vatOutOfScope.case}} {{vatRate.vatOutOfScope.case}}{{/if}}
+                    - {{#if vatRate.vatOutOfScope.reason}} {{vatRate.vatOutOfScope.reason}}{{/if}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatOutOfScope"}}</div>
+                  {{else if vatRate.vatDomesticReverseCharge}}
+                    {{t "vatDomesticReverseCharge_TRUE"}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatDomesticReverseCharge"}}</div>
+                  {{else if vatRate.marginSchemeIndicator}}
+                    {{t (concat "MarginSchemeType_" vatRate.marginSchemeIndicator)}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "marginSchemeIndicator"}} </div>   
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          {{else}}
+            {{#each invoice.invoiceSummary.summaryNormal.summaryByVatRate}}
+              <tr>
+                <td>
+                  {{#if vatRate.vatPercentage}}
+                    {{multiply vatRate.vatPercentage 100}}%
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatPercentage"}}</div>
+                  {{else if vatRate.vatContent}}
+                    {{multiply vatRate.vatPercentage 100}}%
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatContent"}}  </div>
+                  {{else if vatRate.vatExemption}}
+                    {{#if vatRate.vatExemption.case}} {{vatRate.vatExemption.case}}{{/if}}
+                    - {{#if vatRate.vatExemption.reason}} {{vatRate.vatExemption.reason}}{{/if}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatExemption"}}</div>
+                  {{else if vatRate.vatOutOfScope}}
+                    {{#if vatRate.vatOutOfScope.case}} {{vatRate.vatOutOfScope.case}}{{/if}}
+                    - {{#if vatRate.vatOutOfScope.reason}} {{vatRate.vatOutOfScope.reason}}{{/if}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatOutOfScope"}}</div>
+                  {{else if vatRate.vatDomesticReverseCharge}}
+                    {{t "vatDomesticReverseCharge_TRUE"}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "vatDomesticReverseCharge"}}</div>
+                  {{else if vatRate.marginSchemeIndicator}}
+                    {{t (concat "MarginSchemeType_" vatRate.marginSchemeIndicator)}}
+                    <br /><div class="smaller-text">&nbsp;&nbsp;&nbsp;&nbsp; - {{t "marginSchemeIndicator"}}</div>
+                  {{/if}}
+                </td>
+                <td class="text-right">{{formatNumber vatRateNetData.vatRateNetAmount}}</td>
+                <td class="text-right">{{formatNumber vatRateVatData.vatRateVatAmount}}</td>
+                <td class="text-right">{{formatNumber vatRateGrossData.vatRateGrossAmount}}</td>
+              </tr>
+            {{/each}}
+          {{/if}}
+        </table>
+
+
+        <h2>{{t "summary"}}</h2>
+        <table>
+          <tr>
+            {{#unless isSimplified}}
+            <th>
+              <div>{{t "netTotal"}}</div>
+            </th>
+            <th>
+              <div>{{t "vatTotal"}}</div>
+            </th>
+            {{/unless}}
+            <th>
+              <div>{{t "grossTotal"}}</div>
+            </th>
+          </tr>
+          <tr>
+            {{#if isSimplified}}
+              <td class="text-right">
+                <div>{{formatCurrency invoice.invoiceSummary.summaryGrossData.invoiceGrossAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</div>
+                {{#unless (eq invoice.invoiceHead.invoiceDetail.currencyCode "HUF")}}
+                  <div class="smaller-text">{{formatCurrency invoice.invoiceSummary.summaryGrossData.invoiceGrossAmountHUF "HUF"}}</div>
+                {{/unless}}
+              </td>
+            {{else}}  
+              {{#if (eq invoice.invoiceHead.invoiceDetail.currencyCode "HUF")}}
+                <td class="text-right">{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceNetAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</td>
+                <td class="text-right">{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceVatAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</td>
+                <td class="text-right">{{formatCurrency invoice.invoiceSummary.summaryGrossData.invoiceGrossAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</td>
+              {{else}}
+                <td class="text-right">
+                  <div>{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceNetAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</div>
+                  <div class="smaller-text">{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceNetAmountHUF "HUF"}}</div>
+                </td>
+                <td class="text-right">
+                  <div>{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceVatAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</div>
+                  <div class="smaller-text">{{formatCurrency invoice.invoiceSummary.summaryNormal.invoiceVatAmountHUF "HUF"}}</div>
+                </td>
+                <td class="text-right">
+                  <div>{{formatCurrency invoice.invoiceSummary.summaryGrossData.invoiceGrossAmount invoice.invoiceHead.invoiceDetail.currencyCode}}</div>
+                  <div class="smaller-text">{{formatCurrency invoice.invoiceSummary.summaryGrossData.invoiceGrossAmountHUF "HUF"}}</div>
+                </td>
+              {{/if}}
+            {{/if}}  
+          </tr>
+        </table>
+
+      {{/let}}
+    {{/with}}
+  {{/inline}}
+
+  {{#if InvoiceData.invoiceMain.invoice}}
+    <table>
+      <tr>
+        <td>
+          {{> PrintInvoice invoice=InvoiceData.invoiceMain.invoice }}
+        </td>
+      </tr>
+    </table>
+  {{else}}
+    <h1><center>{{t "batchInvoice"}}</center></h1>
+        {{#each InvoiceData.invoiceMain.batchInvoice}}
+          <table>
+                <tr>
+                  <th style="text-align: left;">{{t "batchIndex"}}: {{batchIndex}}</th>
+                </tr>
+                <tr>
+                  <td>{{> PrintInvoice invoice=invoice }}</td>
+                </tr>
+          </table>
+        {{/each}}  
+  {{/if}}
+
+  </body>
+</html>

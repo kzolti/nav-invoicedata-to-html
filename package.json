@@ -1,0 +1,39 @@
+{
+  "name": "nav-invoicedata-to-html",
+  "version": "0.0.1",
+  "description": "Hungarian NAV online invoice invoiceData xml to html view",
+  "main": "build/toHtml.js",
+  "scripts": {
+    "test": "ts-node src/test.ts",
+    "build": "sh sh/templateGen.sh && rm -rf build/* && npx tsc",
+    "release:patch": "git diff-index --quiet HEAD -- && npm version patch && git push && git push --tags && npm publish",
+    "release:minor": "git diff-index --quiet HEAD -- && npm version minor && git push && git push --tags && npm publish",
+    "release:major": "git diff-index --quiet HEAD -- && npm version major && git push && git push --tags && npm publish"
+  },
+  "author": {
+    "name": "Zoltán István KADA",
+    "company": "kAdatSoft",
+    "email": "kada.zoli@gmail.com"
+  },
+  "keywords": [
+    "nav",
+    "online-invoice",
+    "hungary",
+    "invoice"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kzolti/nav-invoicedata-to-html"
+  },
+  "license": "Apache-2.0",
+  "licenseFile": "LICENSE",
+  "dependencies": {
+    "fast-xml-parser": "^5.2.5",
+    "handlebars": "^4.7.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2",
+    "ts-node": "^10.9.2"
+  }
+}
