@@ -2,8 +2,9 @@
  * Interface definitions for the Hungarian Online Invoice System (Magyar Online Számla Rendszer)
  * Based on the XML schema version 3.0 from 2020/11/23
  */
-import { InvoiceCategoryType } from "./baseTypes";
+import { InvoiceCategoryType, TaxNumberType } from "./baseTypes";
 import { AddressType, SimpleAddressType } from "./invoiceBaseTypes";
+import type { TaxpayerIdType, VatCodeType, CountyCodeType } from "./commonTypes";
 
 /**
  * XML root element, számla vagy módosítás adatait leíró típus, amelyet BASE64 kódoltan tartalmaz az invoiceApi sémaleíró invoiceData elementje
@@ -104,12 +105,12 @@ interface SupplierInfo {
      * Belföldi adószám vagy csoportazonosító szám
      * Tax number or group identification number
      */
-    supplierTaxNumber: string;
+    supplierTaxNumber: TaxNumberType;
     /**
      * Csoport tag adószáma, ha a termékbeszerzés vagy szolgáltatás nyújtása csoportazonosító szám alatt történt
      * Tax number of group member, when the supply of goods or services is done under group identification number
      */
-    groupMemberTaxNumber?: string;
+    groupMemberTaxNumber?: TaxNumberType;
     /**
      * Közösségi adószám
      * Community tax number
@@ -196,10 +197,25 @@ interface CustomerVatData {
  */
 interface CustomerTaxNumber {
     /**
+     * Adóalany adószámának első nyolc számjegye (taxpayerId)
+     * First eight digits of the tax number
+     */
+    taxpayerId: TaxpayerIdType;
+    /**
+     * Adóalany adószámának második része, ÁFA kódja
+     * Second part of the tax number, VAT code
+     */
+    vatCode?: VatCodeType;
+    /**
+     * Adóalany adószámának harmadik része, megyekódja
+     * Third part of the tax number, county code
+     */
+    countyCode?: CountyCodeType;
+    /**
      * Csoport tag adószáma, ha a termékbeszerzés vagy szolgáltatás igénybevétele csoportazonosító szám alatt történt
      * Tax number of group member, when the purchase of goods or services is done under group identification number
      */
-    groupMemberTaxNumber?: string;
+    groupMemberTaxNumber?: TaxNumberType;
 }
 
 /**
@@ -211,7 +227,7 @@ interface FiscalRepresentative {
      * A pénzügyi képviselő adószáma
      * Tax number of the fiscal representative
      */
-    fiscalRepresentativeTaxNumber: string;
+    fiscalRepresentativeTaxNumber: TaxNumberType;
     /**
      * A pénzügyi képviselő neve
      * Name of the fiscal representative

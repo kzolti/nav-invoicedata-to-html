@@ -1,38 +1,52 @@
-# Invoice Data Viewer
+# NAV InvoiceData to HTML
 
-## Project Purpose
-This project provides a way to display invoice data from the **Hungarian NAV Online Számla system (`invoiceData` XML)** as a multilingual HTML document.  
-The goal is to make raw invoice data human-readable and understandable in different languages.
-
-## What It Is **Not**
-- The project **does not** generate an official invoice or a printable invoice layout.  
-- It is **only** intended for displaying the data in a clear, structured, and user-friendly form.
-
-## Key Features
-- Multilingual support (e.g., Hungarian, English).
-- Easy-to-read formatting of invoice elements.
+A library to parse NAV Online Invoice XML data and generate a premium, localized HTML representation.
 
 ## Installation
+
 ```bash
 npm install nav-invoicedata-to-html
 ```
 
-## Usage Example
+## Requirements
+
+- Node.js >= 18.0.0
+- ESM support (The library is built as an ES Module)
+
+## Usage
+
+Since the library uses `libxml2-wasm` with top-level await, it must be imported dynamically in CommonJS environments.
+
+### Basic Usage (ESM)
+
+```typescript
+import { generateInvoiceHtml } from 'nav-invoicedata-to-html';
+
+const xmlData = '...'; // Your NAV XML string
+// locale is second, xsdPath is third and optional
+const html = await generateInvoiceHtml(xmlData, 'hu');
 ```
-import toHtml from "nav-invoicedata-to-html";
 
-const xml = `...`;       // your invoiceData XML as a string
-const lang = "en";       // language code: 'en', 'hu', etc.
+### Usage in CommonJS (e.g. ts-node-dev)
 
-const html = toHtml(xml, lang);
+To avoid `require()` errors with top-level await modules, use the dynamic import trick:
 
-/**
- * Converts XML data to HTML format, taking into account the specified language translations.
- * @param {string} xml - XML string
- * @param {string} lang - Language code for translation, e.g., 'en', 'hu'
- * @returns {string} HTML output
- */
+```typescript
+// Use Function trick to prevent tsc from transpiling to require()
+const navHtml = await new Function('return import("nav-invoicedata-to-html")')();
+const { generateInvoiceHtml } = navHtml;
+
+const html = await generateInvoiceHtml(xmlData, 'hu');
 ```
 
-## Status
-Work in progress. The goal is to cover as many elements of the invoiceData schema as possible.
+## Features
+
+- **Validation**: Validates XML against NAV XSD schemas.
+- **Parsing**: Converts complex NAV XML structures into typed JavaScript objects.
+- **HTML Generation**: Produces a clean, styled HTML version of the invoice.
+- **Localization**: Supports multiple locales (default: `hu`, `en`).
+- **Svelte Power**: Uses Svelte 5 for component-based template rendering.
+
+## License
+
+Apache-2.0

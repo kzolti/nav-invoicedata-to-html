@@ -1,9 +1,14 @@
 # Source files
 src/
+dist/**/*.map
+dist/test-*
+dist/test-*.d.ts
+dist/build-components.*
 
 #test files
 Peldaszamlak_v3.0/
 output/
+output.html
 build/test.js
 
 #build files

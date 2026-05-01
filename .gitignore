@@ -1,6 +1,11 @@
-node_modules
-output
-build
+node_modules/
+dist/
+output/
+output.html
+build/
 *.log
 *.lock
+*.tgz
+.vscode/
+.DS_Store
 src/hndlbrs/gen
