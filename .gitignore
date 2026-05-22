@@ -4,7 +4,7 @@ output/
 output.html
 build/
 *.log
-*.lock
+*.lock.json
 *.tgz
 .vscode/
 .DS_Store

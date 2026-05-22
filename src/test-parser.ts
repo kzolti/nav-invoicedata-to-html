@@ -1,7 +1,9 @@
 import { validateXml, parseXml } from './parser/index.js';
 import path from 'path';
-
 import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
     const xmlPath = path.resolve(__dirname, '../Peldaszamlak_v3.0/Belfoldi devizas szamla.xml');

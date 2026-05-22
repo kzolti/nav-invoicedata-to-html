@@ -44,9 +44,11 @@ const html = await generateInvoiceHtml(xmlData, 'hu');
 - **Validation**: Validates XML against NAV XSD schemas.
 - **Parsing**: Converts complex NAV XML structures into typed JavaScript objects.
 - **HTML Generation**: Produces a clean, styled HTML version of the invoice.
+- **Security**: Built-in HTML escaping via `@kitajs/html` to prevent XSS (Cross-Site Scripting) vulnerabilities when rendering untrusted XML data.
 - **Localization**: Supports multiple locales (default: `hu`, `en`).
-- **Svelte Power**: Uses Svelte 5 for component-based template rendering.
+- **JSX Rendering**: Uses `@kitajs/html` for component-based template rendering with JSX.
 
 ## License
 
 Apache-2.0
+

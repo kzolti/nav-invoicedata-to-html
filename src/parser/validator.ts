@@ -21,7 +21,7 @@ export async function validateXml(xmlData: string, xsdPath: string): Promise<boo
         
         // Fontos: a url paraméter megadása elengedhetetlen ahhoz, hogy a relatív importok (<import namespace="...">) működjenek
         // Linuxon az abszolút útvonalhoz file:/// (3 perjel) kell
-        const absoluteXsdPath = path.resolve(xsdPath);
+        const absoluteXsdPath = path.resolve(xsdPath).replace(/\\/g, '/');
         const xsdUrl = absoluteXsdPath.startsWith('/') ? `file://${absoluteXsdPath}` : `file:///${absoluteXsdPath}`;
         
         xsdDoc = XmlDocument.fromString(xsdContent, { url: xsdUrl });

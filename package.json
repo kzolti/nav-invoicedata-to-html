@@ -1,13 +1,12 @@
 {
   "name": "nav-invoicedata-to-html",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "npx tsc && npm run build:components && node dist/test-full.js && cp src/styles/invoice-styles.css output/",
-    "build:components": "node dist/build-components.js",
-    "build": "tsc && npm run build:components && cp src/i18n/*.json dist/i18n/ && cp src/styles/invoice-styles.css dist/",
+    "test": "tsc && cp src/i18n/*.json dist/i18n/ && node dist/test-full.js && cp src/styles/invoice-styles.css output/",
+    "build": "tsc && cp src/i18n/*.json dist/i18n/ && cp src/styles/invoice-styles.css dist/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -35,7 +34,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "svelte": "^5.43.13",
+    "@kitajs/html": "^4.2.13",
     "fast-xml-parser": "^5.3.2",
     "libxml2-wasm": "^0.7.1"
   }

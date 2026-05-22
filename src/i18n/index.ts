@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class I18n {
     private translations: Record<string, string> = {};
-    private locale: string;
+    public readonly locale: string;
 
     constructor(locale: string = 'hu') {
         this.locale = locale;

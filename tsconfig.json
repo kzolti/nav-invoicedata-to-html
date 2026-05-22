@@ -11,9 +11,11 @@
         "rootDir": "./src",
         "declaration": true,
         "declarationMap": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "@kitajs/html",
         "types": [
             "node",
-            "svelte"
+            "@kitajs/html"
         ]
     },
     "include": [
