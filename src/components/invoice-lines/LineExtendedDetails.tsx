@@ -8,6 +8,20 @@ interface Props {
 
 export function LineExtendedDetails({ line, t }: Props): string {
     const parts: string[] = [];
+    
+    // Annotated original invoice number & delivery date from BatchMergedInvoiceComponent
+    if (line._annotatedOriginalInvoiceNumber || line._annotatedDeliveryDate) {
+        const annItems: string[] = [];
+        if (line._annotatedOriginalInvoiceNumber) {
+            annItems.push(`<strong>${t('originalInvoiceNumber')}:</strong> ${esc(line._annotatedOriginalInvoiceNumber)}`);
+        }
+        if (line._annotatedDeliveryDate) {
+            annItems.push(`<strong>${t('invoiceDeliveryDate')}:</strong> ${line._annotatedDeliveryDate}`);
+        }
+        if (annItems.length > 0) {
+            parts.push(`<div class="detail-section">${annItems.join(' | ')}</div>`);
+        }
+    }
 
     // Aggregate invoice line data
     if (line.aggregateInvoiceLineData) {

@@ -207,5 +207,6 @@
     "TRAVEL_AGENCY": "Travel Agency",
     "SECOND_HAND": "Second-hand goods",
     "ARTWORK": "Artwork",
-    "ANTIQUES": "Antiques"
+    "ANTIQUES": "Antiques",
+    "seeLineItems": "See line items"
 }

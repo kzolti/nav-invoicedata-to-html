@@ -3,6 +3,7 @@ import type { TFn, NFn } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
+import { BatchMergedInvoiceComponent, canMergeBatches } from './BatchMergedInvoice.js';
 import { asArray, esc } from './utils.js';
 
 interface Props {
@@ -17,6 +18,27 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
 
     if (data.invoiceMain.batchInvoice) {
         const batch = asArray(data.invoiceMain.batchInvoice);
+
+        // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
+        if (canMergeBatches(batch)) {
+            return (
+                <div class="invoice-container">
+                    <h1>{t('invoice')}</h1>
+                    <div class="invoice-metadata">
+                        <p><strong>{t('invoiceNumber')}:</strong> {esc(data.invoiceNumber)}</p>
+                        <p><strong>{t('invoiceIssueDate')}:</strong> {data.invoiceIssueDate}</p>
+                        {data.completenessIndicator && (
+                            <p>
+                                <strong>{t('complete')}</strong>
+                            </p>
+                        )}
+                    </div>
+
+                    {BatchMergedInvoiceComponent({ batches: batch, t, nf })}
+                </div>
+            ) as string;
+        }
+
         invoices = batch.map((b) => b.invoice);
         batchIndices = batch.map((b) => b.batchIndex);
     } else if (data.invoiceMain.invoice) {

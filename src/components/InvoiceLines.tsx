@@ -33,7 +33,9 @@ const hasLineDetails = (line: any): boolean =>
         (line.GPCExcise != null && line.GPCExcise != 0) ||
         line.dieselOilPurchase ||
         line.netaDeclaration ||
-        line.lineProductFeeContent);
+        line.lineProductFeeContent ||
+        line._annotatedOriginalInvoiceNumber ||
+        line._annotatedDeliveryDate);
 
 const getDiscountedUnitPrice = (line: any): number => {
     const unitPrice = line.unitPrice || 0;
