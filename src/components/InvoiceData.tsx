@@ -1,4 +1,4 @@
-import type { InvoiceData as InvoiceDataType, Invoice } from '../osaTypes/dataTypes.js';
+import type { InvoiceData as InvoiceDataType, Invoice } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent } from './InvoiceLines.js';
@@ -16,7 +16,7 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
     let invoices: Invoice[] = [];
     let batchIndices: number[] = [];
 
-    if (data.invoiceMain.batchInvoice) {
+    if (data.invoiceMain?.batchInvoice) {
         const batch = asArray(data.invoiceMain.batchInvoice);
 
         // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
@@ -41,7 +41,7 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
 
         invoices = batch.map((b) => b.invoice);
         batchIndices = batch.map((b) => b.batchIndex);
-    } else if (data.invoiceMain.invoice) {
+    } else if (data.invoiceMain?.invoice) {
         invoices = [data.invoiceMain.invoice];
         batchIndices = [];
     }

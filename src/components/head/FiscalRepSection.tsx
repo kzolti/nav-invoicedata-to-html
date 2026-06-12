@@ -1,5 +1,5 @@
-import type { FiscalRepresentative } from '../../osaTypes/dataTypes.js';
-import type { AddressType } from '../../osaTypes/baseTypes.js';
+import type { FiscalRepresentative } from 'nav-osa-types';
+import type { AddressType } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { esc } from '../utils.js';
 

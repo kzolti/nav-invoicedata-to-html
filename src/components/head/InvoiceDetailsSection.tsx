@@ -1,4 +1,4 @@
-import type { InvoiceDetail } from '../../osaTypes/dataTypes.js';
+import type { InvoiceDetail } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { asArray, esc } from '../utils.js';
 

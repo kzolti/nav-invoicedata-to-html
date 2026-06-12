@@ -1,4 +1,4 @@
-import type { ProductFeeSummary } from '../../osaTypes/dataTypes.js';
+import type { ProductFeeSummary } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { asArray, esc } from '../utils.js';
 

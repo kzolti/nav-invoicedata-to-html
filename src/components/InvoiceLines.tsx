@@ -1,4 +1,4 @@
-import type { Lines } from '../osaTypes/dataTypes.js';
+import type { Lines } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { asArray, countDecimals, getTargetDecimals, esc } from './utils.js';
 import { VatRateDisplay } from './VatRateDisplay.js';

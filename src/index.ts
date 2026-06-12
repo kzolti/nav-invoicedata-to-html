@@ -1,27 +1,27 @@
-export { parseXml, validateXml } from './parser/index.js';
-export { HtmlGenerator } from './generator/index.js';
-export type { InvoiceData } from './osaTypes/dataTypes.js';
-import { parseXml, validateXml } from './parser/index.js';
-import { HtmlGenerator } from './generator/index.js';
-import type { InvoiceData } from './osaTypes/dataTypes.js';
-import path from 'path';
+export { parseXml, validateXml } from 'nav-osa-types';
+export { HtmlGenerator, CssConfig } from './generator/index.js';
+export type { InvoiceData } from 'nav-osa-types';
+import { parseXml, validateXml } from 'nav-osa-types';
+import { HtmlGenerator, CssConfig } from './generator/index.js';
+import type { InvoiceData } from 'nav-osa-types';
+import { getXsdPath } from 'nav-osa-types';
 
-import { fileURLToPath } from 'url';
+export interface GenerateInvoiceHtmlOptions {
+  locale?: string;
+  xsdPath?: string;
+  cssConfig?: CssConfig;
+  /** Disable XSD validation before parsing. Default: true (enabled). */
+  validate?: boolean;
+}
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export async function generateInvoiceHtml(xmlData: string, options?: GenerateInvoiceHtmlOptions): Promise<string> {
+    const opts = options || {};
+    const parsed = await parseXml<{ InvoiceData: InvoiceData }>(xmlData, {
+        xsdPath: opts.xsdPath || getXsdPath('data'),
+        validate: opts.validate
+    });
+    const jsonData = parsed.InvoiceData;
 
-export async function generateInvoiceHtml(xmlData: string, locale: string = 'hu', xsdPath?: string): Promise<string> {
-    // Ha nincs megadva útvonal, használjuk a csomagban lévő alapértelmezettet
-    const finalXsdPath = xsdPath || path.resolve(__dirname, '..', 'xsd', 'data.xsd');
-
-    const isValid = await validateXml(xmlData, finalXsdPath);
-    if (!isValid) {
-        throw new Error('XML validation failed');
-    }
-
-    const jsonData: InvoiceData = await parseXml(xmlData);
-
-    const generator = new HtmlGenerator(locale);
+    const generator = new HtmlGenerator(opts.locale || 'hu', opts.cssConfig);
     return await generator.generate(jsonData);
 }

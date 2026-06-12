@@ -1,4 +1,4 @@
-import type { SummaryByVatRate } from '../../osaTypes/dataTypes.js';
+import type { SummaryByVatRate } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { VatRateDisplay } from '../VatRateDisplay.js';
 

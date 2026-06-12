@@ -1,4 +1,4 @@
-import { validateXml, parseXml } from './parser/index.js';
+import { validateXml, parseXml, InvoiceData } from 'nav-osa-types';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
@@ -21,10 +21,11 @@ async function main() {
 
     console.log('Parsing XML...');
     try {
-        const result = await parseXml(xmlContent);
-        console.log('Parsed InvoiceData keys:', Object.keys(result));
-        if (result.invoiceMain) {
-            console.log('invoiceMain keys:', Object.keys(result.invoiceMain));
+        const result = await parseXml<{ InvoiceData: InvoiceData }>(xmlContent);
+        const invoiceData = result.InvoiceData;
+        console.log('Parsed InvoiceData keys:', Object.keys(invoiceData));
+        if (invoiceData.invoiceMain) {
+            console.log('invoiceMain keys:', Object.keys(invoiceData.invoiceMain));
         }
     } catch (error) {
         console.error('Parsing error:', error);

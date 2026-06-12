@@ -1,4 +1,4 @@
-import type { AddressType } from '../osaTypes/baseTypes.js';
+import type { AddressType } from 'nav-osa-types';
 
 import { escapeHtml } from '@kitajs/html';
 

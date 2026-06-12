@@ -1,4 +1,4 @@
-import type { Invoice } from '../osaTypes/dataTypes.js';
+import type { Invoice } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { asArray, countDecimals, getTargetDecimals } from './utils.js';
 

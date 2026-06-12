@@ -36,7 +36,7 @@ async function main() {
                 // console.log(JSON.stringify(invoiceData.invoiceMain.invoice.invoiceHead.supplierInfo, null, 2));
 
                 const xmlContent = await fs.readFile(xmlPath, 'utf-8');
-                const html = await generateInvoiceHtml(xmlContent, 'hu', xsdPath);
+                const html = await generateInvoiceHtml(xmlContent, { locale: 'hu', xsdPath });
                 await fs.writeFile(outputPath, html);
                 console.log(`Generated: ${outputFilename}`);
             } catch (err: any) {

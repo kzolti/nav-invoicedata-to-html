@@ -1,4 +1,4 @@
-import type { InvoiceHead } from '../osaTypes/dataTypes.js';
+import type { InvoiceHead } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { formatTaxNumber, getAddressLine1, getAddressFloor } from './utils.js';
 

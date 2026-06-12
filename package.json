@@ -1,6 +1,6 @@
 {
   "name": "nav-invoicedata-to-html",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,7 +35,6 @@
   },
   "dependencies": {
     "@kitajs/html": "^4.2.13",
-    "fast-xml-parser": "^5.3.2",
-    "libxml2-wasm": "^0.7.1"
+    "nav-osa-types": "^1.1.0"
   }
 }

@@ -1,4 +1,4 @@
-import type { SummaryGrossData } from '../../osaTypes/dataTypes.js';
+import type { SummaryGrossData } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 
 interface Props {

@@ -1,4 +1,4 @@
-import type { BatchInvoice, Invoice, Lines, Line } from '../osaTypes/dataTypes.js';
+import type { BatchInvoice, Invoice, Lines, Line } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent } from './InvoiceLines.js';
@@ -270,9 +270,9 @@ function addNum(a: any, b: any): number {
     return parseFloat(((Number(a) || 0) + (Number(b) || 0)).toFixed(10));
 }
 
-/** Kerekít a felesleges tizedesjegyek eltávolításához */
-function roundNum(val: number): number {
-    return parseFloat(val.toFixed(10));
+/** Kerekít a felesleges tizedesjegyek eltávolításához, string-et ad vissza */
+function roundNum(val: number): string {
+    return val.toFixed(10).replace(/\.?0+$/, '');
 }
 
 /** ÁFA kulcs egyedi kulcsot generál a Map számára */
