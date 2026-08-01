@@ -39,8 +39,8 @@ async function main() {
                 const html = await generateInvoiceHtml(xmlContent, { locale: 'hu', xsdPath });
                 await fs.writeFile(outputPath, html);
                 console.log(`Generated: ${outputFilename}`);
-            } catch (err: any) {
-                console.error(`Error processing ${file}:`, err.message);
+            } catch (err: unknown) {
+                console.error(`Error processing ${file}:`, err instanceof Error ? err.message : String(err));
             }
         }
         console.log('Batch processing complete.');

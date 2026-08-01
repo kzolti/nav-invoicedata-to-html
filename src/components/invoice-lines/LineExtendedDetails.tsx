@@ -1,8 +1,9 @@
-import type { TFn } from '../utils.js';
+import type { TFn, DisplayLine } from '../utils.js';
+import type { ProductFeeData } from 'nav-osa-types';
 import { asArray, getAddressLine1, esc } from '../utils.js';
 
 interface Props {
-    line: any;
+    line: DisplayLine;
     t: TFn;
 }
 
@@ -126,7 +127,7 @@ export function LineExtendedDetails({ line, t }: Props): string {
     }
 
     // GPC Excise
-    if (line.GPCExcise != null && line.GPCExcise != 0) {
+    if (line.GPCExcise != null && Number(line.GPCExcise) !== 0) {
         parts.push(
             (<div class="detail-section">
                 <strong>{t('GPCExcise')}:</strong>
@@ -171,7 +172,7 @@ export function LineExtendedDetails({ line, t }: Props): string {
                         </tr>
                     </thead>
                     <tbody>
-                        {feeItems.map((fd: any) => (
+                        {feeItems.map((fd: ProductFeeData) => (
                             <tr>
                                 <td>{esc(fd.productFeeCode?.productCodeValue || fd.productFeeCode?.productCodeOwnValue || '-')}</td>
                                 <td class="text-right">{fd.productFeeQuantity ?? '-'} {fd.productFeeMeasuringUnit ? t(fd.productFeeMeasuringUnit) : ''}</td>

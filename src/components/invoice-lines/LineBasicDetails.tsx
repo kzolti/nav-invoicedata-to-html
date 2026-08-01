@@ -1,8 +1,9 @@
-import type { TFn } from '../utils.js';
+import type { TFn, DisplayLine } from '../utils.js';
+import type { ProductCode, AdditionalData } from 'nav-osa-types';
 import { asArray, esc } from '../utils.js';
 
 interface Props {
-    line: any;
+    line: DisplayLine;
     t: TFn;
 }
 
@@ -15,7 +16,7 @@ export function LineBasicDetails({ line, t }: Props): string {
             (<div class="product-codes">
                 <strong>{t('productCodes')}:</strong>
                 <ul>
-                    {asArray(line.productCodes.productCode).map((code: any) => (
+                    {asArray(line.productCodes.productCode).map((code: ProductCode) => (
                         <li>{t(code.productCodeCategory)}: {esc(code.productCodeValue || code.productCodeOwnValue)}</li>
                     )).join('')}
                 </ul>
@@ -61,7 +62,7 @@ export function LineBasicDetails({ line, t }: Props): string {
             (<div class="additional-data">
                 <strong>{t('additionalData')}:</strong>
                 <ul>
-                    {asArray(line.additionalLineData).map((item: any) => (
+                    {asArray(line.additionalLineData).map((item: AdditionalData) => (
                         <li>
                             <div class="add-data-left">
                                 <strong>{esc(item.dataDescription)}:</strong>

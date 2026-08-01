@@ -1,6 +1,6 @@
-import type { InvoiceDetail } from 'nav-osa-types';
+import type { InvoiceDetail, AdditionalData } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { asArray, esc } from '../utils.js';
+import { asArray, esc, countDecimals } from '../utils.js';
 
 interface Props {
     data: InvoiceDetail;
@@ -41,7 +41,7 @@ export function InvoiceDetailsSection({ data, t, nf }: Props): string {
                 </div>
                 <div class="detail-item">
                     <strong>{t('exchangeRate')}:</strong>
-                    {nf(data.exchangeRate)}
+                    {nf(data.exchangeRate, countDecimals(data.exchangeRate))}
                 </div>
                 {data.paymentMethod && (
                     <div class="detail-item">
@@ -80,30 +80,30 @@ export function InvoiceDetailsSection({ data, t, nf }: Props): string {
 }
 
 function ConventionalInfo({ info, t }: { info: NonNullable<InvoiceDetail['conventionalInvoiceInfo']>; t: TFn }): string {
-    const fields: Array<{ key: string; container: any; field: string }> = [
-        { key: 'orderNumbers', container: info.orderNumbers, field: 'orderNumber' },
-        { key: 'deliveryNotes', container: info.deliveryNotes, field: 'deliveryNote' },
-        { key: 'contractNumbers', container: info.contractNumbers, field: 'contractNumber' },
-        { key: 'ekaerIds', container: info.ekaerIds, field: 'ekaerId' },
-        { key: 'shippingDates', container: info.shippingDates, field: 'shippingDate' },
-        { key: 'supplierCompanyCodes', container: info.supplierCompanyCodes, field: 'supplierCompanyCode' },
-        { key: 'customerCompanyCodes', container: info.customerCompanyCodes, field: 'customerCompanyCode' },
-        { key: 'dealerCodes', container: info.dealerCodes, field: 'dealerCode' },
-        { key: 'costCenters', container: info.costCenters, field: 'costCenter' },
-        { key: 'projectNumbers', container: info.projectNumbers, field: 'projectNumber' },
-        { key: 'generalLedgerAccountNumbers', container: info.generalLedgerAccountNumbers, field: 'generalLedgerAccountNumber' },
-        { key: 'glnNumbersSupplier', container: info.glnNumbersSupplier, field: 'glnNumber' },
-        { key: 'glnNumbersCustomer', container: info.glnNumbersCustomer, field: 'glnNumber' },
-        { key: 'materialNumbers', container: info.materialNumbers, field: 'materialNumber' },
-        { key: 'itemNumbers', container: info.itemNumbers, field: 'itemNumber' },
+    const entries: Array<{ key: string; values: string[] }> = [
+        { key: 'orderNumbers', values: info.orderNumbers?.orderNumber ?? [] },
+        { key: 'deliveryNotes', values: info.deliveryNotes?.deliveryNote ?? [] },
+        { key: 'contractNumbers', values: info.contractNumbers?.contractNumber ?? [] },
+        { key: 'ekaerIds', values: info.ekaerIds?.ekaerId ?? [] },
+        { key: 'shippingDates', values: info.shippingDates?.shippingDate ?? [] },
+        { key: 'supplierCompanyCodes', values: info.supplierCompanyCodes?.supplierCompanyCode ?? [] },
+        { key: 'customerCompanyCodes', values: info.customerCompanyCodes?.customerCompanyCode ?? [] },
+        { key: 'dealerCodes', values: info.dealerCodes?.dealerCode ?? [] },
+        { key: 'costCenters', values: info.costCenters?.costCenter ?? [] },
+        { key: 'projectNumbers', values: info.projectNumbers?.projectNumber ?? [] },
+        { key: 'generalLedgerAccountNumbers', values: info.generalLedgerAccountNumbers?.generalLedgerAccountNumber ?? [] },
+        { key: 'glnNumbersSupplier', values: info.glnNumbersSupplier?.glnNumber ?? [] },
+        { key: 'glnNumbersCustomer', values: info.glnNumbersCustomer?.glnNumber ?? [] },
+        { key: 'materialNumbers', values: info.materialNumbers?.materialNumber ?? [] },
+        { key: 'itemNumbers', values: info.itemNumbers?.itemNumber ?? [] },
     ];
 
-    const items = fields
-        .filter(f => f.container)
-        .map(f => (
+    const items = entries
+        .filter(e => e.values.length > 0)
+        .map(e => (
             <p>
-                <strong>{t(f.key)}:</strong>{' '}
-                {asArray((f.container as any)[f.field]).map(val => esc(val)).join(', ')}
+                <strong>{t(e.key)}:</strong>{' '}
+                {e.values.map(val => esc(val)).join(', ')}
             </p>
         ));
 
@@ -112,7 +112,7 @@ function ConventionalInfo({ info, t }: { info: NonNullable<InvoiceDetail['conven
     return (<div class="conventional-info">{items.join('')}</div>) as string;
 }
 
-function AdditionalInvoiceData({ items, t }: { items: any[]; t: TFn }): string {
+function AdditionalInvoiceData({ items, t }: { items: AdditionalData[]; t: TFn }): string {
     const arr = asArray(items);
     if (arr.length === 0) return '';
 

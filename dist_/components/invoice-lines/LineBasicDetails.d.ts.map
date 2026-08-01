@@ -1,0 +1,1 @@
+{"version":3,"file":"LineBasicDetails.d.ts","sourceRoot":"","sources":["../../../src/components/invoice-lines/LineBasicDetails.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,GAAG,EAAE,WAAW,EAAE,MAAM,aAAa,CAAC;AAIpD,UAAU,KAAK;IACX,IAAI,EAAE,WAAW,CAAC;IAClB,CAAC,EAAE,GAAG,CAAC;CACV;AAED,wBAAgB,gBAAgB,CAAC,EAAE,IAAI,EAAE,CAAC,EAAE,EAAE,KAAK,GAAG,MAAM,CAsE3D"}

@@ -1,6 +1,7 @@
 import { I18n } from '../i18n/index.js';
 import type { InvoiceData } from 'nav-osa-types';
 import { InvoiceDataComponent } from '../components/InvoiceData.js';
+import { preprocessInvoiceData } from '../preprocess.js';
 
 export interface CssConfig {
     /** External CSS file path (href link). */
@@ -18,11 +19,12 @@ export class HtmlGenerator {
         this.cssConfig = cssConfig || {};
     }
 
-    public async generate(data: InvoiceData): Promise<string> {
+    public async generate(rawData: InvoiceData): Promise<string> {
+        const data = preprocessInvoiceData(rawData);
         const html = InvoiceDataComponent({
             data: data,
             t: (key: string) => this.i18n.t(key),
-            nf: (val: any, decimals?: number) => this.i18n.nf(val, decimals)
+            nf: (val: number | string, decimals?: number) => this.i18n.nf(val, decimals)
         });
 
         return this.wrapHtml(html);

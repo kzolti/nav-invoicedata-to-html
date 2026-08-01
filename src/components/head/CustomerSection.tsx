@@ -1,5 +1,5 @@
 import type { CustomerInfo } from 'nav-osa-types';
-import type { AddressType } from 'nav-osa-types';
+import type { AddressType, TaxNumberType } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { esc } from '../utils.js';
 
@@ -7,7 +7,7 @@ interface Props {
     data: CustomerInfo | undefined;
     t: TFn;
     nf: NFn;
-    formatTaxNumber: (tn: any) => string;
+    formatTaxNumber: (tn: TaxNumberType) => string;
     getAddressLine1: (addr: AddressType | undefined) => string;
     getAddressFloor: (addr: AddressType | undefined, t: TFn) => string;
 }

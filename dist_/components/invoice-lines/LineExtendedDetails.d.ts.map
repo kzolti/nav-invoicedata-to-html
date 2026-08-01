@@ -1,0 +1,1 @@
+{"version":3,"file":"LineExtendedDetails.d.ts","sourceRoot":"","sources":["../../../src/components/invoice-lines/LineExtendedDetails.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,GAAG,EAAE,WAAW,EAAE,MAAM,aAAa,CAAC;AAIpD,UAAU,KAAK;IACX,IAAI,EAAE,WAAW,CAAC;IAClB,CAAC,EAAE,GAAG,CAAC;CACV;AAED,wBAAgB,mBAAmB,CAAC,EAAE,IAAI,EAAE,CAAC,EAAE,EAAE,KAAK,GAAG,MAAM,CAoL9D"}

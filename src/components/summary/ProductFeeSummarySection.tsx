@@ -1,6 +1,6 @@
 import type { ProductFeeSummary } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { asArray, esc } from '../utils.js';
+import { asArray, esc, countDecimals } from '../utils.js';
 
 interface Props {
     items: ProductFeeSummary[];
@@ -28,17 +28,17 @@ export function ProductFeeSummarySection({ items, t, nf }: Props): string {
                                 <tr>
                                     <td>{esc(feeData.productFeeCode.productCodeValue || feeData.productFeeCode.productCodeOwnValue || '-')}</td>
                                     <td class="text-right" style="white-space: nowrap;">
-                                        {nf(feeData.productFeeQuantity) || '-'}
+                                        {nf(feeData.productFeeQuantity, countDecimals(feeData.productFeeQuantity)) || '-'}
                                     </td>
                                     <td class="text-right" style="white-space: nowrap;">
-                                        {nf(feeData.productFeeAmount)} HUF
+                                        {nf(feeData.productFeeAmount, countDecimals(feeData.productFeeAmount))} HUF
                                     </td>
                                 </tr>
                             )).join('')}
                         </tbody>
                     </table>
                     <p class="fee-total">
-                        <strong>{t('productChargeSum')}:</strong> {nf(feeSummary.productChargeSum)} HUF
+                        <strong>{t('productChargeSum')}:</strong> {nf(feeSummary.productChargeSum, countDecimals(feeSummary.productChargeSum))} HUF
                     </p>
                     {feeSummary.paymentEvidenceDocumentData && (
                         <div class="detail-section">
