@@ -2,6 +2,7 @@ import type { CustomerInfo } from 'nav-osa-types';
 import type { AddressType } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { esc } from '../utils.js';
+import type { DataEntry } from '../sections.js';
 
 interface Props {
     data: CustomerInfo | undefined;
@@ -10,9 +11,10 @@ interface Props {
     formatTaxNumber: (tn: any) => string;
     getAddressLine1: (addr: AddressType | undefined) => string;
     getAddressFloor: (addr: AddressType | undefined, t: TFn) => string;
+    blocks?: DataEntry[];
 }
 
-export function CustomerSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor }: Props): string {
+export function CustomerSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor, blocks }: Props): string {
     if (!data) {
         return (
             <div class="party customer">
@@ -50,6 +52,10 @@ export function CustomerSection({ data, t, formatTaxNumber, getAddressLine1, get
 
             {data.customerBankAccountNumber &&
                 <p>{t('bankAccount')}: {esc(data.customerBankAccountNumber)}</p>}
+
+            {blocks?.map(block => (
+                <p><strong>{esc(block.dataDescription)}:</strong> {esc(block.dataValue)}</p>
+            )).join('')}
         </div>
     ) as string;
 }

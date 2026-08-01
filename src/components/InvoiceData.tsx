@@ -5,14 +5,16 @@ import { InvoiceLinesComponent } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
 import { BatchMergedInvoiceComponent, canMergeBatches } from './BatchMergedInvoice.js';
 import { asArray, esc } from './utils.js';
+import { splitSections, ExtraDataSection } from './sections.js';
 
 interface Props {
     data: InvoiceDataType;
     t: TFn;
     nf: NFn;
+    locale: string;
 }
 
-export function InvoiceDataComponent({ data, t, nf }: Props): string {
+export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
     let invoices: Invoice[] = [];
     let batchIndices: number[] = [];
 
@@ -21,9 +23,12 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
 
         // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
         if (canMergeBatches(batch)) {
+            const firstSections = splitSections(batch[0].invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
+            const title = firstSections.documentName?.dataValue ?? t('invoice');
             return (
                 <div class="invoice-container">
-                    <h1>{t('invoice')}</h1>
+                    <h1>{esc(title)}</h1>
+                    {firstSections.documentDesc && <p class="document-desc">{esc(firstSections.documentDesc.dataValue)}</p>}
                     <div class="invoice-metadata">
                         <p><strong>{t('invoiceNumber')}:</strong> {esc(data.invoiceNumber)}</p>
                         <p><strong>{t('invoiceIssueDate')}:</strong> {data.invoiceIssueDate}</p>
@@ -34,7 +39,7 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
                         )}
                     </div>
 
-                    {BatchMergedInvoiceComponent({ batches: batch, t, nf })}
+                    {BatchMergedInvoiceComponent({ batches: batch, t, nf, locale })}
                 </div>
             ) as string;
         }
@@ -46,9 +51,13 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
         batchIndices = [];
     }
 
+    const docSections = splitSections(invoices[0]?.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
+    const title = docSections.documentName?.dataValue ?? t('invoice');
+
     return (
         <div class="invoice-container">
-            <h1>{t('invoice')}</h1>
+            <h1>{esc(title)}</h1>
+            {docSections.documentDesc && <p class="document-desc">{esc(docSections.documentDesc.dataValue)}</p>}
             <div class="invoice-metadata">
                 <p><strong>{t('invoiceNumber')}:</strong> {esc(data.invoiceNumber)}</p>
                 <p><strong>{t('invoiceIssueDate')}:</strong> {data.invoiceIssueDate}</p>
@@ -61,6 +70,7 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
 
             {invoices.map((invoice, index) => {
                 const batchIndex = batchIndices[index];
+                const sections = splitSections(invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
                 return (
                     <div class="invoice-section">
                         {/* Batch Index for batch invoices */}
@@ -91,11 +101,13 @@ export function InvoiceDataComponent({ data, t, nf }: Props): string {
                             </div>
                         )}
 
-                        {invoice.invoiceHead && InvoiceHeadComponent({ data: invoice.invoiceHead, t, nf })}
+                        {invoice.invoiceHead && InvoiceHeadComponent({ data: invoice.invoiceHead, t, nf, locale })}
 
                         {invoice.invoiceLines && InvoiceLinesComponent({ data: invoice.invoiceLines, t, nf })}
 
                         {invoice.invoiceSummary && InvoiceSummaryComponent({ invoice, t, nf })}
+
+                        {ExtraDataSection({ items: sections.other, t })}
                     </div>
                 );
             }).join('')}

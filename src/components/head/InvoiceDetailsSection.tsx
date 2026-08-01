@@ -72,9 +72,6 @@ export function InvoiceDetailsSection({ data, t, nf }: Props): string {
 
             {/* Conventional Info */}
             {data.conventionalInvoiceInfo && ConventionalInfo({ info: data.conventionalInvoiceInfo, t })}
-
-            {/* Additional Data */}
-            {data.additionalInvoiceData && AdditionalInvoiceData({ items: data.additionalInvoiceData, t })}
         </div>
     ) as string;
 }
@@ -112,24 +109,3 @@ function ConventionalInfo({ info, t }: { info: NonNullable<InvoiceDetail['conven
     return (<div class="conventional-info">{items.join('')}</div>) as string;
 }
 
-function AdditionalInvoiceData({ items, t }: { items: any[]; t: TFn }): string {
-    const arr = asArray(items);
-    if (arr.length === 0) return '';
-
-    return (
-        <div class="additional-data">
-            <h4>{t('additionalData')}</h4>
-            <ul>
-                {arr.map(item => (
-                    <li>
-                        <div class="add-data-left">
-                            <strong>{esc(item.dataDescription)}:</strong>
-                            <span class="add-data-value">{esc(item.dataValue)}</span>
-                        </div>
-                        <div class="add-data-name">{esc(item.dataName)}</div>
-                    </li>
-                )).join('')}
-            </ul>
-        </div>
-    ) as string;
-}

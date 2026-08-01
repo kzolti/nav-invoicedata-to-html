@@ -2,6 +2,7 @@ import type { SupplierInfo } from 'nav-osa-types';
 import type { AddressType } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { esc } from '../utils.js';
+import type { DataEntry } from '../sections.js';
 
 interface Props {
     data: SupplierInfo;
@@ -10,9 +11,10 @@ interface Props {
     formatTaxNumber: (tn: any) => string;
     getAddressLine1: (addr: AddressType | undefined) => string;
     getAddressFloor: (addr: AddressType | undefined, t: TFn) => string;
+    blocks?: DataEntry[];
 }
 
-export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor }: Props): string {
+export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor, blocks }: Props): string {
     const floorInfo = getAddressFloor(data.supplierAddress, t);
 
     return (
@@ -37,6 +39,10 @@ export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, get
                 <p>{t('individualExemption')}: {String(data.individualExemption)}</p>}
             {data.exciseLicenceNum &&
                 <p>{t('exciseLicenceNum')}: {esc(data.exciseLicenceNum)}</p>}
+
+            {blocks?.map(block => (
+                <p><strong>{esc(block.dataDescription)}:</strong> {esc(block.dataValue)}</p>
+            )).join('')}
         </div>
     ) as string;
 }

@@ -100,6 +100,16 @@ body {
     letter-spacing: 1px;
 }
 
+.invoice-container h1 + .document-desc {
+    margin-top: calc(-1 * var(--spacing-sm));
+}
+
+.document-desc {
+    color: var(--text-muted);
+    font-size: var(--font-size-small);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
 .invoice-container h2 {
     color: var(--primary-color);
     font-size: var(--font-size-large);
@@ -283,24 +293,30 @@ body {
 }
 
 /* Conventional Info */
-.conventional-info,
-.additional-data {
+.conventional-info {
     margin-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
     padding-top: var(--spacing-md);
 }
 
-.conventional-info p,
-.additional-data p {
+.conventional-info p {
     margin: var(--spacing-sm) 0;
 }
 
-.additional-data ul {
+/* Extra data section at the end of the invoice (below the summary) */
+.invoice-extra-data {
+    margin-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-md);
+}
+
+.invoice-extra-data ul {
     list-style: none;
     padding: 0;
     margin: var(--spacing-sm) 0;
 }
 
+.invoice-extra-data li,
 .additional-data li {
     padding: var(--spacing-xs) 0;
     border-bottom: 1px dotted var(--border-color);

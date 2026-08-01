@@ -4,11 +4,13 @@ import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
 import { asArray, esc } from './utils.js';
+import { splitSections, ExtraDataSection } from './sections.js';
 
 interface Props {
     batches: BatchInvoice[];
     t: TFn;
     nf: NFn;
+    locale: string;
 }
 
 /**
@@ -96,8 +98,11 @@ function collectAnnotatedLines(batches: BatchInvoice[]): AnnotatedLine[] {
 /**
  * Összevont számlaképet renderel több batchInvoice-ból, ha azok alapvető adatai megegyeznek.
  */
-export function BatchMergedInvoiceComponent({ batches, t, nf }: Props): string {
+export function BatchMergedInvoiceComponent({ batches, t, nf, locale }: Props): string {
     const firstInvoice = batches[0].invoice;
+
+    // Az egyéb (nem a könyvtárnak címzett) adatok összegyűjtése az összes batch-ből
+    const extraItems = batches.flatMap(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).other);
 
     // Felépítjük az annotált tétellistát
     const annotatedLines = collectAnnotatedLines(batches);
@@ -156,7 +161,7 @@ export function BatchMergedInvoiceComponent({ batches, t, nf }: Props): string {
             </div>
 
             {/* Fejléc az első batch-ből, de a teljesítési dátum módosítva */}
-            {renderMergedHead(firstInvoice, hasMultipleDeliveryDates, t, nf)}
+            {renderMergedHead(firstInvoice, hasMultipleDeliveryDates, t, nf, locale)}
 
             {/* Összevont tételek a per-line metaadatokkal */}
             {InvoiceLinesComponent({
@@ -167,6 +172,9 @@ export function BatchMergedInvoiceComponent({ batches, t, nf }: Props): string {
 
             {/* Összevont összesítés */}
             {InvoiceSummaryComponent({ invoice: mergedInvoice, t, nf })}
+
+            {/* Egyéb adatok az összesítő alatt */}
+            {ExtraDataSection({ items: extraItems, t })}
         </div>
     ) as string;
 }
@@ -174,9 +182,9 @@ export function BatchMergedInvoiceComponent({ batches, t, nf }: Props): string {
 /**
  * Az összevont fejlécet rendereli. Ha a teljesítési dátumok eltérnek, "Lásd a tételeknél" szöveget jelenít meg.
  */
-function renderMergedHead(invoice: Invoice, hasMultipleDeliveryDates: boolean, t: TFn, nf: NFn): string {
+function renderMergedHead(invoice: Invoice, hasMultipleDeliveryDates: boolean, t: TFn, nf: NFn, locale: string): string {
     if (!hasMultipleDeliveryDates) {
-        return InvoiceHeadComponent({ data: invoice.invoiceHead, t, nf });
+        return InvoiceHeadComponent({ data: invoice.invoiceHead, t, nf, locale });
     }
 
     // Clone the invoiceDetail to override the delivery date display
@@ -188,7 +196,7 @@ function renderMergedHead(invoice: Invoice, hasMultipleDeliveryDates: boolean, t
         },
     };
 
-    return InvoiceHeadComponent({ data: modifiedHead, t, nf });
+    return InvoiceHeadComponent({ data: modifiedHead, t, nf, locale });
 }
 
 /**

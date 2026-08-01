@@ -22,7 +22,8 @@ export class HtmlGenerator {
         const html = InvoiceDataComponent({
             data: data,
             t: (key: string) => this.i18n.t(key),
-            nf: (val: any, decimals?: number) => this.i18n.nf(val, decimals)
+            nf: (val: any, decimals?: number) => this.i18n.nf(val, decimals),
+            locale: this.i18n.locale
         });
 
         return this.wrapHtml(html);
