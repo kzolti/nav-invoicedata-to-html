@@ -325,6 +325,8 @@ body {
     align-items: flex-start;
     gap: var(--spacing-md);
     flex-wrap: nowrap;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .add-data-left {
@@ -338,6 +340,8 @@ body {
 
 .add-data-value {
     color: var(--text-primary);
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .add-data-name {

@@ -1,6 +1,6 @@
 import type { Lines } from 'nav-osa-types';
-import type { TFn, NFn } from './utils.js';
-import { asArray, countDecimals, getTargetDecimals, esc } from './utils.js';
+import type { TFn, NFn, DisplayLine } from './utils.js';
+import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice } from './utils.js';
 import { VatRateDisplay } from './VatRateDisplay.js';
 import { LineBasicDetails } from './invoice-lines/LineBasicDetails.js';
 import { LineExtendedDetails } from './invoice-lines/LineExtendedDetails.js';
@@ -12,11 +12,11 @@ interface Props {
 }
 
 // Check if any line has a discount
-const hasDiscounts = (lines: any[]): boolean =>
+const hasDiscounts = (lines: DisplayLine[]): boolean =>
     lines.some(line => line.lineDiscountData != null);
 
 // Check if line has any additional details to show
-const hasLineDetails = (line: any): boolean =>
+const hasLineDetails = (line: DisplayLine): boolean =>
     !!(line.productCodes ||
         line.lineExpressionIndicator === false ||
         line.intermediatedService ||
@@ -30,35 +30,36 @@ const hasLineDetails = (line: any): boolean =>
         line.advanceData ||
         line.referencesToOtherLines ||
         line.newTransportMean ||
-        (line.GPCExcise != null && line.GPCExcise != 0) ||
+        (line.GPCExcise != null && Number(line.GPCExcise) !== 0) ||
         line.dieselOilPurchase ||
         line.netaDeclaration ||
         line.lineProductFeeContent ||
         line._annotatedOriginalInvoiceNumber ||
         line._annotatedDeliveryDate);
 
-const getDiscountedUnitPrice = (line: any): number => {
-    const unitPrice = line.unitPrice || 0;
-    const quantity = line.quantity;
+const getDiscountedUnitPrice = (line: DisplayLine): string => {
     const discountData = line.lineDiscountData;
-
-    if (discountData) {
-        if (discountData.discountValue != null && quantity != null && quantity !== 0) {
-            return parseFloat((unitPrice - discountData.discountValue / quantity).toFixed(4));
-        }
-        if (discountData.discountRate != null) {
-            return parseFloat((unitPrice * (1 - discountData.discountRate)).toFixed(4));
-        }
+    if (!discountData) {
+        // Keep original XML string (trailing zeros for column alignment)
+        return line.unitPrice != null && line.unitPrice !== '' ? String(line.unitPrice) : '';
     }
-    return unitPrice;
+    return calcDiscountedUnitPrice(
+        line.unitPrice,
+        line.quantity,
+        discountData.discountValue,
+        discountData.discountRate
+    );
 };
 
 /** Compute per-column decimal precision based on all line data */
-function computeColumnDecimals(lines: any[]) {
+function computeColumnDecimals(lines: DisplayLine[]) {
     return {
-        unitPrice: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.unitPrice)))),
+        unitPrice: getTargetDecimals(Math.max(0, ...lines.map(l =>
+            Math.max(countDecimals(l.unitPrice), countDecimals(l.unitPriceHUF))
+        ))),
         discount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineDiscountData?.discountValue)))),
         discountedUnitPrice: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(getDiscountedUnitPrice(l))))),
+        quantity: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.quantity)))),
         netAmount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineAmountsNormal?.lineNetAmountData?.lineNetAmount)))),
         vatAmount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineAmountsNormal?.lineVatData?.lineVatAmount)))),
         grossAmount: getTargetDecimals(Math.max(0, ...lines.map(l => {
@@ -108,7 +109,7 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
     ) as string;
 }
 
-function renderLineGroup(line: any, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, t: TFn, nf: NFn): string {
+function renderLineGroup(line: DisplayLine, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, t: TFn, nf: NFn): string {
     return (
         <tbody class="line-group">
             {renderMainRow(line, hasAnyDiscount, colDecs, t, nf)}
@@ -126,7 +127,7 @@ function renderLineGroup(line: any, hasAnyDiscount: boolean, colDecs: ReturnType
     ) as string;
 }
 
-function renderMainRow(line: any, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function renderMainRow(line: DisplayLine, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
     return (
         <tr class="main-row">
             <td>{line.lineNumber}</td>
@@ -139,7 +140,7 @@ function renderMainRow(line: any, hasAnyDiscount: boolean, colDecs: ReturnType<t
 
             {hasAnyDiscount && (<>
                 <td class="text-right" style="white-space: nowrap;">
-                    {nf(line.unitPrice, colDecs.unitPrice)}
+                    {nf(line.unitPrice ?? '', colDecs.unitPrice)}
                     {line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice &&
                         (<><br /><small>{nf(line.unitPriceHUF, colDecs.unitPrice)} HUF</small></>)}
                 </td>
@@ -154,10 +155,7 @@ function renderMainRow(line: any, hasAnyDiscount: boolean, colDecs: ReturnType<t
             </td>
 
             <td class="text-right" style="white-space: nowrap;">
-                {nf(
-                    line.quantity != null ? parseFloat(Number(line.quantity).toFixed(4)) : null,
-                    Math.min(countDecimals(line.quantity), 4)
-                )}
+                {nf(line.quantity ?? '', colDecs.quantity)}
                 {line.unitOfMeasure ? ' ' + t(line.unitOfMeasure) : ''}
                 {line.unitOfMeasureOwn && (<><br /><small>({esc(line.unitOfMeasureOwn)})</small></>)}
             </td>
@@ -167,39 +165,39 @@ function renderMainRow(line: any, hasAnyDiscount: boolean, colDecs: ReturnType<t
     ) as string;
 }
 
-function buildDiscountTitle(line: any, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function buildDiscountTitle(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
     const dd = line.lineDiscountData;
     if (!dd) return '';
     const parts: string[] = [];
     if (dd.discountDescription) parts.push(esc(dd.discountDescription));
     if (dd.discountValue != null) parts.push(`${t('discountValue')}: ${nf(dd.discountValue, colDecs.discount)}`);
-    if (dd.discountRate != null) parts.push(`${t('discountRate')}: ${nf(dd.discountRate * 100)}%`);
+    if (dd.discountRate != null) parts.push(`${t('discountRate')}: ${nf(dd.discountRate, countDecimals(dd.discountRate))}%`);
     return parts.join('\n');
 }
 
-function renderDiscountCell(line: any, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function renderDiscountCell(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
     const dd = line.lineDiscountData;
     if (!dd) return '-';
-    if (dd.discountRate) return `${nf(dd.discountRate * 100)}%`;
+    if (dd.discountRate) return `${nf(dd.discountRate, countDecimals(dd.discountRate))}%`;
     if (dd.discountValue) return nf(dd.discountValue, colDecs.discount);
     return '-';
 }
 
-function renderAmountCells(line: any, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function renderAmountCells(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
     if (line.lineAmountsNormal) {
         const la = line.lineAmountsNormal;
         return (<>
             <td class="text-right" style="white-space: nowrap;">
-                {nf(la.lineNetAmountData?.lineNetAmount, colDecs.netAmount) || '-'}
+                {nf(la.lineNetAmountData?.lineNetAmount ?? '', colDecs.netAmount) || '-'}
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {la.lineVatData ? (<>
-                    {nf(la.lineVatData.lineVatAmount, colDecs.vatAmount) || '-'}
+                    {nf(la.lineVatData.lineVatAmount ?? '', colDecs.vatAmount) || '-'}
                     <br /><small>{VatRateDisplay({ vatRate: la.lineVatRate, t, nf })}</small>
                 </>) : '-'}
             </td>
             <td class="text-right" style="white-space: nowrap;">
-                {nf(la.lineGrossAmountData?.lineGrossAmountNormal, colDecs.grossAmount) || '-'}
+                {nf(la.lineGrossAmountData?.lineGrossAmountNormal ?? '', colDecs.grossAmount) || '-'}
             </td>
         </>) as string;
     }

@@ -1,9 +1,9 @@
-import type { BatchInvoice, Invoice, Lines, Line } from 'nav-osa-types';
-import type { TFn, NFn } from './utils.js';
+import type { BatchInvoice, Invoice, Lines, Line, SummaryByVatRate, VatRate } from 'nav-osa-types';
+import type { TFn, NFn, DisplayLine } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
-import { asArray, esc } from './utils.js';
+import { asArray, esc, addDecimal } from './utils.js';
 import { splitSections, ExtraDataSection } from './sections.js';
 
 interface Props {
@@ -54,7 +54,7 @@ export function canMergeBatches(batches: BatchInvoice[]): boolean {
  * Annotált tétel típus: az eredeti sor kiegészítve a batch-ből származó metaadatokkal
  */
 export interface AnnotatedLine {
-    line: Line;
+    line: DisplayLine;
     originalInvoiceNumber: string;
     deliveryDate: string;
     modificationIndex: number;
@@ -209,7 +209,7 @@ function buildMergedSummaryInvoice(batches: BatchInvoice[]): Invoice {
     const summaries = batches.map(b => b.invoice.invoiceSummary);
 
     // summaryByVatRate összevonás ÁFA-kulcs szerint
-    const vatRateMap = new Map<string, any>();
+    const vatRateMap = new Map<string, SummaryByVatRate>();
 
     for (const summary of summaries) {
         if (summary.summaryNormal?.summaryByVatRate) {
@@ -217,14 +217,14 @@ function buildMergedSummaryInvoice(batches: BatchInvoice[]): Invoice {
                 const key = getVatRateKey(vr.vatRate);
                 const existing = vatRateMap.get(key);
                 if (existing) {
-                    // Összegzés
-                    existing.vatRateNetData.vatRateNetAmount = addNum(existing.vatRateNetData.vatRateNetAmount, vr.vatRateNetData.vatRateNetAmount);
-                    existing.vatRateNetData.vatRateNetAmountHUF = addNum(existing.vatRateNetData.vatRateNetAmountHUF, vr.vatRateNetData.vatRateNetAmountHUF);
-                    existing.vatRateVatData.vatRateVatAmount = addNum(existing.vatRateVatData.vatRateVatAmount, vr.vatRateVatData.vatRateVatAmount);
-                    existing.vatRateVatData.vatRateVatAmountHUF = addNum(existing.vatRateVatData.vatRateVatAmountHUF, vr.vatRateVatData.vatRateVatAmountHUF);
+                    // Összegzés (MonetaryType: 2 tizedes)
+                    existing.vatRateNetData.vatRateNetAmount = addDecimal(existing.vatRateNetData.vatRateNetAmount, vr.vatRateNetData.vatRateNetAmount);
+                    existing.vatRateNetData.vatRateNetAmountHUF = addDecimal(existing.vatRateNetData.vatRateNetAmountHUF, vr.vatRateNetData.vatRateNetAmountHUF);
+                    existing.vatRateVatData.vatRateVatAmount = addDecimal(existing.vatRateVatData.vatRateVatAmount, vr.vatRateVatData.vatRateVatAmount);
+                    existing.vatRateVatData.vatRateVatAmountHUF = addDecimal(existing.vatRateVatData.vatRateVatAmountHUF, vr.vatRateVatData.vatRateVatAmountHUF);
                     if (existing.vatRateGrossData && vr.vatRateGrossData) {
-                        existing.vatRateGrossData.vatRateGrossAmount = addNum(existing.vatRateGrossData.vatRateGrossAmount, vr.vatRateGrossData.vatRateGrossAmount);
-                        existing.vatRateGrossData.vatRateGrossAmountHUF = addNum(existing.vatRateGrossData.vatRateGrossAmountHUF, vr.vatRateGrossData.vatRateGrossAmountHUF);
+                        existing.vatRateGrossData.vatRateGrossAmount = addDecimal(existing.vatRateGrossData.vatRateGrossAmount, vr.vatRateGrossData.vatRateGrossAmount);
+                        existing.vatRateGrossData.vatRateGrossAmountHUF = addDecimal(existing.vatRateGrossData.vatRateGrossAmountHUF, vr.vatRateGrossData.vatRateGrossAmountHUF);
                     }
                 } else {
                     // Deep clone
@@ -235,23 +235,25 @@ function buildMergedSummaryInvoice(batches: BatchInvoice[]): Invoice {
     }
 
     // Total nettó, ÁFA összegzés
-    let totalNet = 0;
-    let totalNetHUF = 0;
-    let totalVat = 0;
-    let totalVatHUF = 0;
-    let totalGross = 0;
-    let totalGrossHUF = 0;
+    let totalNet = '0';
+    let totalNetHUF = '0';
+    let totalVat = '0';
+    let totalVatHUF = '0';
+    let totalGross = '0';
+    let totalGrossHUF = '0';
+    let hasGross = false;
 
     for (const summary of summaries) {
         if (summary.summaryNormal) {
-            totalNet = addNum(totalNet, summary.summaryNormal.invoiceNetAmount);
-            totalNetHUF = addNum(totalNetHUF, summary.summaryNormal.invoiceNetAmountHUF);
-            totalVat = addNum(totalVat, summary.summaryNormal.invoiceVatAmount);
-            totalVatHUF = addNum(totalVatHUF, summary.summaryNormal.invoiceVatAmountHUF);
+            totalNet = addDecimal(totalNet, summary.summaryNormal.invoiceNetAmount);
+            totalNetHUF = addDecimal(totalNetHUF, summary.summaryNormal.invoiceNetAmountHUF);
+            totalVat = addDecimal(totalVat, summary.summaryNormal.invoiceVatAmount);
+            totalVatHUF = addDecimal(totalVatHUF, summary.summaryNormal.invoiceVatAmountHUF);
         }
         if (summary.summaryGrossData) {
-            totalGross = addNum(totalGross, summary.summaryGrossData.invoiceGrossAmount);
-            totalGrossHUF = addNum(totalGrossHUF, summary.summaryGrossData.invoiceGrossAmountHUF);
+            hasGross = true;
+            totalGross = addDecimal(totalGross, summary.summaryGrossData.invoiceGrossAmount);
+            totalGrossHUF = addDecimal(totalGrossHUF, summary.summaryGrossData.invoiceGrossAmountHUF);
         }
     }
 
@@ -260,31 +262,21 @@ function buildMergedSummaryInvoice(batches: BatchInvoice[]): Invoice {
         invoiceSummary: {
             summaryNormal: {
                 summaryByVatRate: Array.from(vatRateMap.values()),
-                invoiceNetAmount: roundNum(totalNet),
-                invoiceNetAmountHUF: roundNum(totalNetHUF),
-                invoiceVatAmount: roundNum(totalVat),
-                invoiceVatAmountHUF: roundNum(totalVatHUF),
+                invoiceNetAmount: totalNet,
+                invoiceNetAmountHUF: totalNetHUF,
+                invoiceVatAmount: totalVat,
+                invoiceVatAmountHUF: totalVatHUF,
             },
-            summaryGrossData: totalGross !== 0 ? {
-                invoiceGrossAmount: roundNum(totalGross),
-                invoiceGrossAmountHUF: roundNum(totalGrossHUF),
+            summaryGrossData: hasGross ? {
+                invoiceGrossAmount: totalGross,
+                invoiceGrossAmountHUF: totalGrossHUF,
             } : undefined,
         },
     };
 }
 
-/** Két numerikus értéket ad össze, string-eket is kezelve */
-function addNum(a: any, b: any): number {
-    return parseFloat(((Number(a) || 0) + (Number(b) || 0)).toFixed(10));
-}
-
-/** Kerekít a felesleges tizedesjegyek eltávolításához, string-et ad vissza */
-function roundNum(val: number): string {
-    return val.toFixed(10).replace(/\.?0+$/, '');
-}
-
 /** ÁFA kulcs egyedi kulcsot generál a Map számára */
-function getVatRateKey(vatRate: any): string {
+function getVatRateKey(vatRate: VatRate): string {
     if (vatRate.vatPercentage != null) return `pct:${vatRate.vatPercentage}`;
     if (vatRate.vatExemption) return `exempt:${vatRate.vatExemption.case}`;
     if (vatRate.vatOutOfScope) return `oos:${vatRate.vatOutOfScope.case}`;

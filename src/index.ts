@@ -1,10 +1,9 @@
-export { parseXml, validateXml } from 'nav-osa-types';
+export { parseXml, validateXml, XsdSchemaName } from 'nav-osa-types';
 export { HtmlGenerator, CssConfig } from './generator/index.js';
 export type { InvoiceData } from 'nav-osa-types';
-import { parseXml, validateXml } from 'nav-osa-types';
+import { parseXml, validateXml, XsdSchemaName } from 'nav-osa-types';
 import { HtmlGenerator, CssConfig } from './generator/index.js';
 import type { InvoiceData } from 'nav-osa-types';
-import { getXsdPath } from 'nav-osa-types';
 
 export interface GenerateInvoiceHtmlOptions {
   locale?: string;
@@ -17,7 +16,7 @@ export interface GenerateInvoiceHtmlOptions {
 export async function generateInvoiceHtml(xmlData: string, options?: GenerateInvoiceHtmlOptions): Promise<string> {
     const opts = options || {};
     const parsed = await parseXml<{ InvoiceData: InvoiceData }>(xmlData, {
-        xsdPath: opts.xsdPath || getXsdPath('data'),
+        xsdPath: opts.xsdPath || XsdSchemaName.Data,
         validate: opts.validate
     });
     const jsonData = parsed.InvoiceData;
