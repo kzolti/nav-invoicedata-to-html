@@ -2,12 +2,30 @@ import { I18n } from '../i18n/index.js';
 import type { InvoiceData } from 'nav-osa-types';
 import { InvoiceDataComponent } from '../components/InvoiceData.js';
 import { preprocessInvoiceData } from '../preprocess.js';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 export interface CssConfig {
     /** External CSS file path (href link). */
     path?: string;
     /** CSS content to embed inline as `<style>`. */
     inline?: string;
+}
+
+let defaultCssCache: string | null = null;
+
+/** A könyvtár saját invoice-styles.css tartalma (a csomagban szállított fájlból). */
+function getInvoiceCss(): string {
+    if (defaultCssCache != null) return defaultCssCache;
+    try {
+        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+        const cssPath = path.resolve(moduleDir, '../invoice-styles.css');
+        defaultCssCache = readFileSync(cssPath, 'utf8');
+    } catch {
+        defaultCssCache = '';
+    }
+    return defaultCssCache;
 }
 
 export class HtmlGenerator {
@@ -51,7 +69,9 @@ export class HtmlGenerator {
         if (this.cssConfig.inline) {
             return `<style>\n${this.cssConfig.inline}\n</style>`;
         }
-        const href = this.cssConfig.path || 'invoice-styles.css';
-        return `<link rel="stylesheet" href="${href}">`;
+        if (this.cssConfig.path) {
+            return `<link rel="stylesheet" href="${this.cssConfig.path}">`;
+        }
+        return `<style>\n${getInvoiceCss()}\n</style>`;
     }
 }
