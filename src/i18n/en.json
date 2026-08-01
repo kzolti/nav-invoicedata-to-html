@@ -105,7 +105,7 @@
     "vatExempt": "VAT Exempt",
     "simplifiedInvoice": "Simplified Invoice",
     "productCodes": "Product Codes",
-    "discount": "Discount",
+    "discount": "Discount\nDisc. net unit price",
     "discountValue": "Discount Amount",
     "discountRate": "Discount Rate",
     "lineExpression": "Item quantity expressible in natural unit",

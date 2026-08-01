@@ -98,19 +98,39 @@ function parseNumericColumns(data: InvoiceData): void {
 
     if (line.lineAmountsNormal) {
       const la = line.lineAmountsNormal;
-      add('lineNetAmount', { obj: la.lineNetAmountData as unknown as Record<string, unknown>, key: 'lineNetAmount' });
+      if (la.lineNetAmountData?.lineNetAmount != null) {
+        add('lineNetAmount', { obj: la.lineNetAmountData as unknown as Record<string, unknown>, key: 'lineNetAmount' });
+      }
+      if (la.lineNetAmountData?.lineNetAmountHUF != null) {
+        add('lineNetAmount', { obj: la.lineNetAmountData as unknown as Record<string, unknown>, key: 'lineNetAmountHUF' });
+      }
       if (la.lineVatData) {
-        add('lineVatAmount', { obj: la.lineVatData as unknown as Record<string, unknown>, key: 'lineVatAmount' });
+        if (la.lineVatData.lineVatAmount != null) {
+          add('lineVatAmount', { obj: la.lineVatData as unknown as Record<string, unknown>, key: 'lineVatAmount' });
+        }
+        if (la.lineVatData.lineVatAmountHUF != null) {
+          add('lineVatAmount', { obj: la.lineVatData as unknown as Record<string, unknown>, key: 'lineVatAmountHUF' });
+        }
       }
       if (la.lineGrossAmountData) {
-        add('lineGrossAmountNormal', { obj: la.lineGrossAmountData as unknown as Record<string, unknown>, key: 'lineGrossAmountNormal' });
+        if (la.lineGrossAmountData.lineGrossAmountNormal != null) {
+          add('lineGrossAmountNormal', { obj: la.lineGrossAmountData as unknown as Record<string, unknown>, key: 'lineGrossAmountNormal' });
+        }
+        if (la.lineGrossAmountData.lineGrossAmountNormalHUF != null) {
+          add('lineGrossAmountNormal', { obj: la.lineGrossAmountData as unknown as Record<string, unknown>, key: 'lineGrossAmountNormalHUF' });
+        }
       }
       add('vatPercentage', { obj: la.lineVatRate as unknown as Record<string, unknown>, key: 'vatPercentage' });
       add('vatContent', { obj: la.lineVatRate as unknown as Record<string, unknown>, key: 'vatContent' });
     }
     if (line.lineAmountsSimplified) {
       const la = line.lineAmountsSimplified;
-      add('lineGrossAmountSimplified', { obj: la as unknown as Record<string, unknown>, key: 'lineGrossAmountSimplified' });
+      if (la.lineGrossAmountSimplified != null) {
+        add('lineGrossAmountSimplified', { obj: la as unknown as Record<string, unknown>, key: 'lineGrossAmountSimplified' });
+      }
+      if (la.lineGrossAmountSimplifiedHUF != null) {
+        add('lineGrossAmountSimplified', { obj: la as unknown as Record<string, unknown>, key: 'lineGrossAmountSimplifiedHUF' });
+      }
       add('vatPercentage', { obj: la.lineVatRate as unknown as Record<string, unknown>, key: 'vatPercentage' });
       add('vatContent', { obj: la.lineVatRate as unknown as Record<string, unknown>, key: 'vatContent' });
     }
@@ -142,25 +162,32 @@ function trimSummaryNumeric(data: InvoiceData): void {
 
   if (summary.summaryNormal) {
     const sn = summary.summaryNormal;
-    net.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceNetAmount' });
-    vat.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceVatAmount' });
+    if (sn.invoiceNetAmount != null) net.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceNetAmount' });
+    if (sn.invoiceNetAmountHUF != null) net.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceNetAmountHUF' });
+    if (sn.invoiceVatAmount != null) vat.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceVatAmount' });
+    if (sn.invoiceVatAmountHUF != null) vat.push({ obj: sn as unknown as Record<string, unknown>, key: 'invoiceVatAmountHUF' });
     for (const b of sn.summaryByVatRate) {
-      net.push({ obj: b.vatRateNetData as unknown as Record<string, unknown>, key: 'vatRateNetAmount' });
-      vat.push({ obj: b.vatRateVatData as unknown as Record<string, unknown>, key: 'vatRateVatAmount' });
+      if (b.vatRateNetData.vatRateNetAmount != null) net.push({ obj: b.vatRateNetData as unknown as Record<string, unknown>, key: 'vatRateNetAmount' });
+      if (b.vatRateNetData.vatRateNetAmountHUF != null) net.push({ obj: b.vatRateNetData as unknown as Record<string, unknown>, key: 'vatRateNetAmountHUF' });
+      if (b.vatRateVatData.vatRateVatAmount != null) vat.push({ obj: b.vatRateVatData as unknown as Record<string, unknown>, key: 'vatRateVatAmount' });
+      if (b.vatRateVatData.vatRateVatAmountHUF != null) vat.push({ obj: b.vatRateVatData as unknown as Record<string, unknown>, key: 'vatRateVatAmountHUF' });
       if (b.vatRateGrossData) {
-        gross.push({ obj: b.vatRateGrossData as unknown as Record<string, unknown>, key: 'vatRateGrossAmount' });
+        if (b.vatRateGrossData.vatRateGrossAmount != null) gross.push({ obj: b.vatRateGrossData as unknown as Record<string, unknown>, key: 'vatRateGrossAmount' });
+        if (b.vatRateGrossData.vatRateGrossAmountHUF != null) gross.push({ obj: b.vatRateGrossData as unknown as Record<string, unknown>, key: 'vatRateGrossAmountHUF' });
       }
     }
   }
 
   if (summary.summarySimplified) {
     for (const s of summary.summarySimplified) {
-      grossSimplified.push({ obj: s as unknown as Record<string, unknown>, key: 'vatContentGrossAmount' });
+      if (s.vatContentGrossAmount != null) grossSimplified.push({ obj: s as unknown as Record<string, unknown>, key: 'vatContentGrossAmount' });
+      if (s.vatContentGrossAmountHUF != null) grossSimplified.push({ obj: s as unknown as Record<string, unknown>, key: 'vatContentGrossAmountHUF' });
     }
   }
 
   if (summary.summaryGrossData) {
-    gross.push({ obj: summary.summaryGrossData as unknown as Record<string, unknown>, key: 'invoiceGrossAmount' });
+    if (summary.summaryGrossData.invoiceGrossAmount != null) gross.push({ obj: summary.summaryGrossData as unknown as Record<string, unknown>, key: 'invoiceGrossAmount' });
+    if (summary.summaryGrossData.invoiceGrossAmountHUF != null) gross.push({ obj: summary.summaryGrossData as unknown as Record<string, unknown>, key: 'invoiceGrossAmountHUF' });
   }
 
   for (const col of [net, vat, gross, grossSimplified]) {

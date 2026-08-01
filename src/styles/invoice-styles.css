@@ -394,6 +394,12 @@ body {
     border-color: var(--bg-invoice-header);
 }
 
+.lines-table thead .header-sub {
+    font-weight: 400;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
 .lines-table .text-right {
     text-align: right;
 }

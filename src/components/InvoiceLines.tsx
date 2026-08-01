@@ -11,10 +11,6 @@ interface Props {
     nf: NFn;
 }
 
-// Check if any line has a discount
-const hasDiscounts = (lines: DisplayLine[]): boolean =>
-    lines.some(line => line.lineDiscountData != null);
-
 // Check if line has any additional details to show
 const hasLineDetails = (line: DisplayLine): boolean =>
     !!(line.productCodes ||
@@ -72,9 +68,8 @@ function computeColumnDecimals(lines: DisplayLine[]) {
 
 export function InvoiceLinesComponent({ data, t, nf }: Props): string {
     const lines = asArray(data.line);
-    const hasAnyDiscount = hasDiscounts(lines);
     const colDecs = computeColumnDecimals(lines);
-    const totalCols = hasAnyDiscount ? 9 : 7;
+    const totalCols = 9;
 
     return (
         <div class="invoice-lines">
@@ -91,28 +86,40 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
                     <tr>
                         <th>#</th>
                         <th>{t('description')}</th>
-                        {hasAnyDiscount && (<>
-                            <th class="text-right">{t('netPrice')}</th>
-                            <th class="text-right">{t('discount')}</th>
-                        </>)}
-                        <th class="text-right">{t('unitPrice')}</th>
                         <th class="text-right">{t('quantity')}</th>
+                        <th class="text-right">{t('unitOfMeasure')}</th>
+                        <th class="text-right">{t('unitPrice')}</th>
+                        {DiscountHeader({ t })}
                         <th class="text-right">{t('netAmount')}</th>
                         <th class="text-right">{t('vatAmount')}</th>
                         <th class="text-right">{t('grossAmount')}</th>
                     </tr>
                 </thead>
 
-                {lines.map(line => renderLineGroup(line, hasAnyDiscount, colDecs, totalCols, t, nf)).join('')}
+                {lines.map(line => renderLineGroup(line, colDecs, totalCols, t, nf)).join('')}
             </table>
         </div>
     ) as string;
 }
 
-function renderLineGroup(line: DisplayLine, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, t: TFn, nf: NFn): string {
+function DiscountHeader({ t }: { t: TFn }): string {
+    const lines = t('discount').split('\n');
+    return (
+        <th class="text-right">
+            {lines.map((line, i) => (
+                <span class={i > 0 ? 'header-sub' : undefined}>
+                    {line}
+                    {i < lines.length - 1 && <br />}
+                </span>
+            ))}
+        </th>
+    ) as string;
+}
+
+function renderLineGroup(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, t: TFn, nf: NFn): string {
     return (
         <tbody class="line-group">
-            {renderMainRow(line, hasAnyDiscount, colDecs, t, nf)}
+            {renderMainRow(line, colDecs, t, nf)}
             {hasLineDetails(line) && (
                 <tr class="details-row">
                     <td colspan={String(totalCols)}>
@@ -127,7 +134,7 @@ function renderLineGroup(line: DisplayLine, hasAnyDiscount: boolean, colDecs: Re
     ) as string;
 }
 
-function renderMainRow(line: DisplayLine, hasAnyDiscount: boolean, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
     return (
         <tr class="main-row">
             <td>{line.lineNumber}</td>
@@ -138,26 +145,27 @@ function renderMainRow(line: DisplayLine, hasAnyDiscount: boolean, colDecs: Retu
                 </div>
             </td>
 
-            {hasAnyDiscount && (<>
-                <td class="text-right" style="white-space: nowrap;">
-                    {nf(line.unitPrice ?? '', colDecs.unitPrice)}
-                    {line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice &&
-                        (<><br /><small>{nf(line.unitPriceHUF, colDecs.unitPrice)} HUF</small></>)}
-                </td>
-                <td class="text-right" style="white-space: nowrap;"
-                    title={buildDiscountTitle(line, colDecs, t, nf)}>
-                    {renderDiscountCell(line, colDecs, t, nf)}
-                </td>
-            </>)}
-
             <td class="text-right" style="white-space: nowrap;">
-                {nf(getDiscountedUnitPrice(line), colDecs.discountedUnitPrice)}
+                {nf(line.quantity ?? '', colDecs.quantity)}
             </td>
 
             <td class="text-right" style="white-space: nowrap;">
-                {nf(line.quantity ?? '', colDecs.quantity)}
-                {line.unitOfMeasure ? ' ' + t(line.unitOfMeasure) : ''}
+                {line.unitOfMeasure ? t(line.unitOfMeasure) : '-'}
                 {line.unitOfMeasureOwn && (<><br /><small>({esc(line.unitOfMeasureOwn)})</small></>)}
+            </td>
+
+            <td class="text-right" style="white-space: nowrap;">
+                {nf(line.unitPrice ?? '', colDecs.unitPrice) || '-'}
+                {line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice &&
+                    (<><br /><small>{nf(line.unitPriceHUF, colDecs.unitPrice)} HUF</small></>)}
+            </td>
+
+            <td class="text-right" style="white-space: nowrap;"
+                title={buildDiscountTitle(line, colDecs, t, nf)}>
+                {renderDiscountCell(line, colDecs, t, nf)}
+                {line.lineDiscountData && (<>
+                    <br /><small>{nf(getDiscountedUnitPrice(line), colDecs.discountedUnitPrice)}</small>
+                </>)}
             </td>
 
             {renderAmountCells(line, colDecs, t, nf)}
@@ -189,15 +197,21 @@ function renderAmountCells(line: DisplayLine, colDecs: ReturnType<typeof compute
         return (<>
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineNetAmountData?.lineNetAmount ?? '', colDecs.netAmount) || '-'}
+                {la.lineNetAmountData?.lineNetAmountHUF && la.lineNetAmountData.lineNetAmountHUF !== la.lineNetAmountData.lineNetAmount &&
+                    (<><br /><small>{nf(la.lineNetAmountData.lineNetAmountHUF, colDecs.netAmount)} HUF</small></>)}
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {la.lineVatData ? (<>
                     {nf(la.lineVatData.lineVatAmount ?? '', colDecs.vatAmount) || '-'}
+                    {la.lineVatData.lineVatAmountHUF && la.lineVatData.lineVatAmountHUF !== la.lineVatData.lineVatAmount &&
+                        (<><br /><small>{nf(la.lineVatData.lineVatAmountHUF, colDecs.vatAmount)} HUF</small></>)}
                     <br /><small>{VatRateDisplay({ vatRate: la.lineVatRate, t, nf })}</small>
                 </>) : '-'}
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineGrossAmountData?.lineGrossAmountNormal ?? '', colDecs.grossAmount) || '-'}
+                {la.lineGrossAmountData?.lineGrossAmountNormalHUF && la.lineGrossAmountData.lineGrossAmountNormalHUF !== la.lineGrossAmountData.lineGrossAmountNormal &&
+                    (<><br /><small>{nf(la.lineGrossAmountData.lineGrossAmountNormalHUF, colDecs.grossAmount)} HUF</small></>)}
             </td>
         </>) as string;
     }
@@ -211,6 +225,8 @@ function renderAmountCells(line: DisplayLine, colDecs: ReturnType<typeof compute
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineGrossAmountSimplified, colDecs.grossAmount) || '-'}
+                {la.lineGrossAmountSimplifiedHUF && la.lineGrossAmountSimplifiedHUF !== la.lineGrossAmountSimplified &&
+                    (<><br /><small>{nf(la.lineGrossAmountSimplifiedHUF, colDecs.grossAmount)} HUF</small></>)}
             </td>
         </>) as string;
     }

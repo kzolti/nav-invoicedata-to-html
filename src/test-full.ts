@@ -9,7 +9,6 @@ async function main() {
     try {
         const examplesDir = path.resolve(__dirname, '../Peldaszamlak_v3.0');
         const outputDir = path.resolve(__dirname, '../output');
-        const xsdPath = path.resolve(__dirname, '../xsd/data.xsd');
 
         // Ensure output directory exists
         try {
@@ -36,7 +35,7 @@ async function main() {
                 // console.log(JSON.stringify(invoiceData.invoiceMain.invoice.invoiceHead.supplierInfo, null, 2));
 
                 const xmlContent = await fs.readFile(xmlPath, 'utf-8');
-                const html = await generateInvoiceHtml(xmlContent, { locale: 'hu', xsdPath });
+                const html = await generateInvoiceHtml(xmlContent, { locale: 'hu' });
                 await fs.writeFile(outputPath, html);
                 console.log(`Generated: ${outputFilename}`);
             } catch (err: unknown) {

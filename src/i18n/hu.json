@@ -135,7 +135,7 @@
     "simplifiedInvoice": "Egyszerűsített számla",
     "vatRate": "ÁFA kulcs",
     "productCodes": "Termékkódok",
-    "discount": "Kedvezmény",
+    "discount": "Kedvezmény\nKedv. netto egys. ár",
     "lineExpression": "Tétel mennyiségi egysége természetes mértékegységben kifejezhető",
     "lineExpressionFalse": "Mennyiségi egysége természetes mértékegységben nem kifejezhető",
     "intermediatedService": "Közvetített szolgáltatás",
