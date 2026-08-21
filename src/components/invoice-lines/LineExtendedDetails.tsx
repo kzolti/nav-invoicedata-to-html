@@ -1,15 +1,36 @@
 import type { TFn, DisplayLine } from '../utils.js';
 import type { ProductFeeData } from 'nav-osa-types';
-import { asArray, getAddressLine1, esc } from '../utils.js';
+import { asArray, getAddressLine1, esc, vatCodeKey } from '../utils.js';
 
 interface Props {
     line: DisplayLine;
     t: TFn;
+    ambiguousVatCodes: Set<string>;
 }
 
-export function LineExtendedDetails({ line, t }: Props): string {
+export function LineExtendedDetails({ line, t, ambiguousVatCodes }: Props): string {
     const parts: string[] = [];
-    
+
+    // VAT exemption / out-of-scope reason, shown only when the same code
+    // appears with more than one distinct reason across the invoice
+    const vatRate = line.lineAmountsNormal?.lineVatRate ?? line.lineAmountsSimplified?.lineVatRate;
+    if (vatRate?.vatExemption?.reason && ambiguousVatCodes.has(vatCodeKey(vatRate))) {
+        parts.push(
+            (<div class="detail-section">
+                <strong>{t('vatExemption') || t('vatExempt')}: {vatRate.vatExemption.case}</strong>
+                <p>{esc(vatRate.vatExemption.reason)}</p>
+            </div>) as string
+        );
+    }
+    if (vatRate?.vatOutOfScope?.reason && ambiguousVatCodes.has(vatCodeKey(vatRate))) {
+        parts.push(
+            (<div class="detail-section">
+                <strong>{t('vatOutOfScope')}: {vatRate.vatOutOfScope.case}</strong>
+                <p>{esc(vatRate.vatOutOfScope.reason)}</p>
+            </div>) as string
+        );
+    }
+
     // Annotated original invoice number & delivery date from BatchMergedInvoiceComponent
     if (line._annotatedOriginalInvoiceNumber || line._annotatedDeliveryDate) {
         const annItems: string[] = [];

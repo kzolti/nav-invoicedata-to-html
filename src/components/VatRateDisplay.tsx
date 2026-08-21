@@ -1,5 +1,5 @@
 import type { VatRate } from 'nav-osa-types';
-import { countDecimals, type TFn, type NFn } from './utils.js';
+import { countDecimals, esc, type TFn, type NFn } from './utils.js';
 
 interface Props {
     vatRate: VatRate;
@@ -33,4 +33,15 @@ export function VatRateDisplay({ vatRate, t, nf }: Props): string {
         : '';
 
     return label + mismatch;
+}
+
+/** Small note with the exemption / out-of-scope reason, if any (for wide cells, e.g. summary tables) */
+export function VatRateReasonNote({ vatRate }: { vatRate: VatRate }): string {
+    if (vatRate.vatExemption?.reason) {
+        return `<br /><small>${esc(vatRate.vatExemption.reason)}</small>`;
+    }
+    if (vatRate.vatOutOfScope?.reason) {
+        return `<br /><small>${esc(vatRate.vatOutOfScope.reason)}</small>`;
+    }
+    return '';
 }

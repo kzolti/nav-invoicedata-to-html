@@ -1,6 +1,6 @@
 import type { SummarySimplified } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { VatRateDisplay } from '../VatRateDisplay.js';
+import { VatRateDisplay, VatRateReasonNote } from '../VatRateDisplay.js';
 
 interface Props {
     lines: SummarySimplified[];
@@ -23,7 +23,7 @@ export function SimplifiedSummary({ lines, decs, t, nf }: Props): string {
                 <tbody>
                     {lines.map(item => (
                         <tr>
-                            <td>{VatRateDisplay({ vatRate: item.vatRate, t, nf })}</td>
+                            <td>{VatRateDisplay({ vatRate: item.vatRate, t, nf })}{VatRateReasonNote({ vatRate: item.vatRate })}</td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {nf(item.vatContentGrossAmount, decs)}
                                 {item.vatContentGrossAmountHUF &&

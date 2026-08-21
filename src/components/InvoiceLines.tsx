@@ -1,6 +1,6 @@
-import type { Lines } from 'nav-osa-types';
+import type { Lines, VatRate } from 'nav-osa-types';
 import type { TFn, NFn, DisplayLine } from './utils.js';
-import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice } from './utils.js';
+import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice, vatCodeKey } from './utils.js';
 import { VatRateDisplay } from './VatRateDisplay.js';
 import { LineBasicDetails } from './invoice-lines/LineBasicDetails.js';
 import { LineExtendedDetails } from './invoice-lines/LineExtendedDetails.js';
@@ -12,7 +12,40 @@ interface Props {
 }
 
 // Check if line has any additional details to show
-const hasLineDetails = (line: DisplayLine): boolean =>
+const lineVatRate = (line: DisplayLine) =>
+    line.lineAmountsNormal?.lineVatRate ?? line.lineAmountsSimplified?.lineVatRate;
+
+// Codes (vatExemption / vatOutOfScope) appearing with more than one distinct reason across the invoice
+const computeAmbiguousVatCodes = (lines: DisplayLine[]): Set<string> => {
+    const reasonsByCode = new Map<string, Set<string>>();
+    for (const line of lines) {
+        const vatRate = lineVatRate(line);
+        if (!vatRate) continue;
+        const entries: Array<[string, string | undefined]> = [];
+        if (vatRate.vatExemption) entries.push([`ex:${vatRate.vatExemption.case}`, vatRate.vatExemption.reason]);
+        if (vatRate.vatOutOfScope) entries.push([`os:${vatRate.vatOutOfScope.case}`, vatRate.vatOutOfScope.reason]);
+        for (const [key, reason] of entries) {
+            if (!reason) continue;
+            let reasons = reasonsByCode.get(key);
+            if (!reasons) { reasons = new Set(); reasonsByCode.set(key, reasons); }
+            reasons.add(reason);
+        }
+    }
+    const ambiguous = new Set<string>();
+    for (const [key, reasons] of reasonsByCode) {
+        if (reasons.size > 1) ambiguous.add(key);
+    }
+    return ambiguous;
+};
+
+const hasLineVatReason = (line: DisplayLine, ambiguousVatCodes: Set<string>): boolean => {
+    const vatRate: VatRate | undefined = lineVatRate(line);
+    return !!(vatRate && ambiguousVatCodes.has(vatCodeKey(vatRate)) &&
+        ((vatRate.vatExemption && vatRate.vatExemption.reason) ||
+            (vatRate.vatOutOfScope && vatRate.vatOutOfScope.reason)));
+};
+
+const hasLineDetails = (line: DisplayLine, ambiguousVatCodes: Set<string>): boolean =>
     !!(line.productCodes ||
         line.lineExpressionIndicator === false ||
         line.intermediatedService ||
@@ -31,7 +64,8 @@ const hasLineDetails = (line: DisplayLine): boolean =>
         line.netaDeclaration ||
         line.lineProductFeeContent ||
         line._annotatedOriginalInvoiceNumber ||
-        line._annotatedDeliveryDate);
+        line._annotatedDeliveryDate ||
+        hasLineVatReason(line, ambiguousVatCodes));
 
 const getDiscountedUnitPrice = (line: DisplayLine): string => {
     const discountData = line.lineDiscountData;
@@ -69,7 +103,9 @@ function computeColumnDecimals(lines: DisplayLine[]) {
 export function InvoiceLinesComponent({ data, t, nf }: Props): string {
     const lines = asArray(data.line);
     const colDecs = computeColumnDecimals(lines);
-    const totalCols = 9;
+    const hasDiscount = lines.some(line => !!line.lineDiscountData);
+    const totalCols = 9 - (hasDiscount ? 0 : 1);
+    const ambiguousVatCodes = computeAmbiguousVatCodes(lines);
 
     return (
         <div class="invoice-lines">
@@ -86,17 +122,17 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
                     <tr>
                         <th>#</th>
                         <th>{t('description')}</th>
-                        <th class="text-right">{t('quantity')}</th>
-                        <th class="text-right">{t('unitOfMeasure')}</th>
+                        <th class="text-right" title={t('quantityTitle')}>{t('quantity')}</th>
+                        <th class="text-right" title={t('unitOfMeasureTitle')}>{t('unitOfMeasure')}</th>
                         <th class="text-right">{t('unitPrice')}</th>
-                        {DiscountHeader({ t })}
+                        {hasDiscount && DiscountHeader({ t })}
                         <th class="text-right">{t('netAmount')}</th>
                         <th class="text-right">{t('vatAmount')}</th>
                         <th class="text-right">{t('grossAmount')}</th>
                     </tr>
                 </thead>
 
-                {lines.map(line => renderLineGroup(line, colDecs, totalCols, t, nf)).join('')}
+                {lines.map(line => renderLineGroup(line, colDecs, totalCols, hasDiscount, t, nf, ambiguousVatCodes)).join('')}
             </table>
         </div>
     ) as string;
@@ -105,7 +141,7 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
 function DiscountHeader({ t }: { t: TFn }): string {
     const lines = t('discount').split('\n');
     return (
-        <th class="text-right">
+        <th class="text-right" title={t('discountTitle')}>
             {lines.map((line, i) => (
                 <span class={i > 0 ? 'header-sub' : undefined}>
                     {line}
@@ -116,16 +152,16 @@ function DiscountHeader({ t }: { t: TFn }): string {
     ) as string;
 }
 
-function renderLineGroup(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, t: TFn, nf: NFn): string {
+function renderLineGroup(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, hasDiscount: boolean, t: TFn, nf: NFn, ambiguousVatCodes: Set<string>): string {
     return (
         <tbody class="line-group">
-            {renderMainRow(line, colDecs, t, nf)}
-            {hasLineDetails(line) && (
+            {renderMainRow(line, colDecs, hasDiscount, t, nf)}
+            {hasLineDetails(line, ambiguousVatCodes) && (
                 <tr class="details-row">
                     <td colspan={String(totalCols)}>
                         <div class="line-details">
                             {LineBasicDetails({ line, t })}
-                            {LineExtendedDetails({ line, t })}
+                            {LineExtendedDetails({ line, t, ambiguousVatCodes })}
                         </div>
                     </td>
                 </tr>
@@ -134,7 +170,7 @@ function renderLineGroup(line: DisplayLine, colDecs: ReturnType<typeof computeCo
     ) as string;
 }
 
-function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
+function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, hasDiscount: boolean, t: TFn, nf: NFn): string {
     return (
         <tr class="main-row">
             <td>{line.lineNumber}</td>
@@ -160,13 +196,15 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
                     (<><br /><small>{nf(line.unitPriceHUF, colDecs.unitPrice)} HUF</small></>)}
             </td>
 
-            <td class="text-right" style="white-space: nowrap;"
-                title={buildDiscountTitle(line, colDecs, t, nf)}>
-                {renderDiscountCell(line, colDecs, t, nf)}
-                {line.lineDiscountData && (<>
-                    <br /><small>{nf(getDiscountedUnitPrice(line), colDecs.discountedUnitPrice)}</small>
-                </>)}
-            </td>
+            {hasDiscount && (
+                <td class="text-right" style="white-space: nowrap;"
+                    title={buildDiscountTitle(line, colDecs, t, nf)}>
+                    {renderDiscountCell(line, colDecs, t, nf)}
+                    {line.lineDiscountData && (<>
+                        <br /><small>{nf(getDiscountedUnitPrice(line), colDecs.discountedUnitPrice)}</small>
+                    </>)}
+                </td>
+            )}
 
             {renderAmountCells(line, colDecs, t, nf)}
         </tr>

@@ -1,7 +1,8 @@
 {
   "name": "nav-invoicedata-to-html",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "type": "module",
+  "description": "Hungarian NAV Online Invoice (OSA) XML data to HTML viewer and generator.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -16,7 +17,7 @@
   ],
   "scripts": {
     "test": "tsc && cp src/i18n/*.json dist/i18n/ && node dist/test-full.js && cp src/styles/invoice-styles.css output/",
-    "build": "tsc && cp src/i18n/*.json dist/i18n/ && cp src/styles/invoice-styles.css dist/",
+    "build": "tsc && cp src/i18n/*.json dist/i18n/ && cp src/styles/invoice-styles.css dist/ && rm -f dist/test-*.js dist/test-*.d.ts dist/test-*.d.ts.map",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -35,22 +36,31 @@
   },
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.11.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kzolti/nav-invoicedata-to-html.git"
   },
-  "description": "Hungarian NAV Online Invoice (OSA) XML data to HTML viewer and generator.",
+  "funding": [
+    {
+      "type": "Buy me a coffee (Revolut)",
+      "url": "https://revolut.me/zoltnifdgo?note=nav-invoicedata-to-html"
+    },
+    {
+      "type": "Buy me a coffee (GitHub)",
+      "url": "https://github.com/sponsors/kzolti"
+    }
+  ],
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@kitajs/html": "^4.2.13",
-    "nav-osa-types": "file:../nav-osa-types"
+    "@kitajs/html": "^4.2.13"
   },
   "peerDependencies": {
-    "nav-osa-core": "^0.1.0"
+    "nav-osa-core": "^0.2.6",
+    "nav-osa-types": "^2.0.1"
   }
 }

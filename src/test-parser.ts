@@ -1,4 +1,4 @@
-import { validateXml, parseXml, XsdSchemaName } from 'nav-osa-core';
+import { validateXml, xmlParser, XsdSchemaName } from 'nav-osa-core';
 import type { InvoiceData } from 'nav-osa-types';
 import path from 'path';
 import fs from 'fs/promises';
@@ -21,7 +21,7 @@ async function main() {
 
     console.log('Parsing XML...');
     try {
-        const result = await parseXml<{ InvoiceData: InvoiceData }>(xmlContent);
+        const result = await xmlParser<{ InvoiceData: InvoiceData }>(xmlContent, XsdSchemaName.Data);
         const invoiceData = result.InvoiceData;
         console.log('Parsed InvoiceData keys:', Object.keys(invoiceData));
         if (invoiceData.invoiceMain) {

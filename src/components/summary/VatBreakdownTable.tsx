@@ -1,6 +1,6 @@
 import type { SummaryByVatRate } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { VatRateDisplay } from '../VatRateDisplay.js';
+import { VatRateDisplay, VatRateReasonNote } from '../VatRateDisplay.js';
 
 interface Props {
     vatRateLines: SummaryByVatRate[];
@@ -25,7 +25,7 @@ export function VatBreakdownTable({ vatRateLines, vatDecs, t, nf }: Props): stri
                 <tbody>
                     {vatRateLines.map(item => (
                         <tr>
-                            <td>{VatRateDisplay({ vatRate: item.vatRate, t, nf })}</td>
+                            <td>{VatRateDisplay({ vatRate: item.vatRate, t, nf })}{VatRateReasonNote({ vatRate: item.vatRate })}</td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {nf(item.vatRateNetData.vatRateNetAmount, vatDecs.net)}
                                 {item.vatRateNetData.vatRateNetAmountHUF &&

@@ -1,4 +1,4 @@
-import type { AddressType, TaxNumberType, DetailedAddressType, SimpleAddressType, Line } from 'nav-osa-types';
+import type { AddressType, TaxNumberType, DetailedAddressType, SimpleAddressType, Line, VatRate } from 'nav-osa-types';
 
 import { escapeHtml } from '@kitajs/html';
 
@@ -23,6 +23,13 @@ export const esc = (val: string | number | boolean | null | undefined): string =
 /** Ensure a value is always an array */
 export const asArray = <T,>(item: T | T[] | undefined): T[] =>
     Array.isArray(item) ? item : item ? [item] : [];
+
+/** Grouping key for vatExemption / vatOutOfScope treatment (type + case) */
+export const vatCodeKey = (vatRate: VatRate | undefined): string => {
+    if (vatRate?.vatExemption?.case) return `ex:${vatRate.vatExemption.case}`;
+    if (vatRate?.vatOutOfScope?.case) return `os:${vatRate.vatOutOfScope.case}`;
+    return '';
+};
 
 /** Format a tax number (taxpayerId-vatCode-countyCode) */
 export const formatTaxNumber = (tn: TaxNumberType | undefined | null): string => {

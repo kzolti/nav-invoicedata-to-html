@@ -39,10 +39,12 @@ export function InvoiceDetailsSection({ data, t, nf }: Props): string {
                     <strong>{t('currency')}:</strong>
                     {data.currencyCode}
                 </div>
-                <div class="detail-item">
-                    <strong>{t('exchangeRate')}:</strong>
-                    {nf(data.exchangeRate, countDecimals(data.exchangeRate))}
-                </div>
+                {!(data.currencyCode === 'HUF' && Number(data.exchangeRate) === 1) && (
+                    <div class="detail-item">
+                        <strong>{t('exchangeRate')}:</strong>
+                        {nf(data.exchangeRate, countDecimals(data.exchangeRate))}
+                    </div>
+                )}
                 {data.paymentMethod && (
                     <div class="detail-item">
                         <strong>{t('paymentMethod')}:</strong>
