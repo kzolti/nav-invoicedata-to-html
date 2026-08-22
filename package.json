@@ -59,8 +59,8 @@
   "dependencies": {
     "@kitajs/html": "^4.2.13"
   },
-  "peerDependencies": {
-    "nav-osa-core": "^0.2.6",
-    "nav-osa-types": "^2.0.1"
-  }
+"peerDependencies": {
+     "nav-osa-core": "workspace:^",
+     "nav-osa-types": "workspace:^"
+   }
 }
