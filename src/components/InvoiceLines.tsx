@@ -67,7 +67,7 @@ const hasLineDetails = (line: DisplayLine, ambiguousVatCodes: Set<string>): bool
         line._annotatedDeliveryDate ||
         hasLineVatReason(line, ambiguousVatCodes));
 
-const getDiscountedUnitPrice = (line: DisplayLine): string => {
+const getDiscountedUnitPrice = (line: DisplayLine, scale?: number): string => {
     const discountData = line.lineDiscountData;
     if (!discountData) {
         // Keep original XML string (trailing zeros for column alignment)
@@ -77,18 +77,22 @@ const getDiscountedUnitPrice = (line: DisplayLine): string => {
         line.unitPrice,
         line.quantity,
         discountData.discountValue,
-        discountData.discountRate
+        discountData.discountRate,
+        scale ?? 10
     );
 };
 
 /** Compute per-column decimal precision based on all line data */
 function computeColumnDecimals(lines: DisplayLine[]) {
+    // A K.n.e. ár is egységár: ugyanarra a skálára kerekítjük, mint a
+    // Nettó egységár oszlopot (oszlopszélesség-barát, sorok közt igazított).
+    const unitPrice = getTargetDecimals(Math.max(0, ...lines.map(l =>
+        Math.max(countDecimals(l.unitPrice), countDecimals(l.unitPriceHUF))
+    )));
     return {
-        unitPrice: getTargetDecimals(Math.max(0, ...lines.map(l =>
-            Math.max(countDecimals(l.unitPrice), countDecimals(l.unitPriceHUF))
-        ))),
+        unitPrice,
         discount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineDiscountData?.discountValue)))),
-        discountedUnitPrice: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(getDiscountedUnitPrice(l))))),
+        discountedUnitPrice: unitPrice,
         quantity: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.quantity)))),
         netAmount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineAmountsNormal?.lineNetAmountData?.lineNetAmount)))),
         vatAmount: getTargetDecimals(Math.max(0, ...lines.map(l => countDecimals(l.lineAmountsNormal?.lineVatData?.lineVatAmount)))),
@@ -201,7 +205,7 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
                     title={buildDiscountTitle(line, colDecs, t, nf)}>
                     {renderDiscountCell(line, colDecs, t, nf)}
                     {line.lineDiscountData && (<>
-                        <br /><small>{nf(getDiscountedUnitPrice(line), colDecs.discountedUnitPrice)}</small>
+                        <br /><small>{nf(getDiscountedUnitPrice(line, colDecs.discountedUnitPrice), colDecs.discountedUnitPrice)}</small>
                     </>)}
                 </td>
             )}

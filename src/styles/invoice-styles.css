@@ -402,6 +402,7 @@ body {
 
 .lines-table .text-right {
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 .lines-table .main-row {
