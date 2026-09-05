@@ -206,6 +206,7 @@
     "airCargo": "Air Cargo",
     "operationHours": "Operation Hours",
     "productFeeTakeoverData": "Product Fee Takeover Data",
+    "productFee": "Product fee clause",
     "takeoverReason": "Takeover Reason",
     "feeObligor": "Product fee obligor",
     "feeObligorSeller": "Seller",

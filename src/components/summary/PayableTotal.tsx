@@ -23,7 +23,7 @@ export function PayableTotal({ data, decs, currency, locale, t, nf }: Props): st
             <p class="total-line">
                 <strong>{t('payable')}:</strong> {nf(data.invoiceGrossAmount, decs)} {shortCurrency(currency, locale)}
                 {showHuf &&
-                    (<><br /><small>{nf(data.invoiceGrossAmountHUF, decs)} HUF</small></>)}
+                    (<><br /><small class="huf-sub">{nf(data.invoiceGrossAmountHUF, decs)} HUF</small></>)}
             </p>
             {words && <p class="total-words">{words}</p>}
         </div>

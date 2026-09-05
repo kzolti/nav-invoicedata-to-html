@@ -28,7 +28,7 @@ export function SimplifiedSummary({ lines, decs, t, nf }: Props): string {
                                 {nf(item.vatContentGrossAmount, decs)}
                                 {item.vatContentGrossAmountHUF &&
                                     item.vatContentGrossAmountHUF !== item.vatContentGrossAmount &&
-                                    (<><br /><small>{nf(item.vatContentGrossAmountHUF, decs)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nf(item.vatContentGrossAmountHUF, decs)} HUF</small></>)}
                             </td>
                         </tr>
                     )).join('')}

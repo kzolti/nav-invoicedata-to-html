@@ -562,17 +562,17 @@ body {
 }
 
 .summary-table.fee-detail-table thead {
-    background: var(--bg-invoice-header);
-    color: white;
+    background: none;
+    color: var(--text-primary);
 }
 
 .summary-table.fee-detail-table thead th {
-    border-color: var(--bg-invoice-header);
-    border-right: 1px solid #fff;
+    border-color: var(--border-color);
+    border-right: 1px solid var(--border-color);
 }
 
 .summary-table.fee-detail-table thead th:last-child {
-    border-right-color: var(--bg-invoice-header);
+    border-right-color: var(--border-color);
 }
 
 .summary-table tfoot .summary-total-row td {
@@ -611,8 +611,7 @@ body {
 .total-words {
     text-align: right;
     font-style: italic;
-    color: var(--text-secondary);
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-base);
     margin-top: 0;
 }
 
@@ -632,6 +631,11 @@ body {
 small {
     color: var(--text-muted);
     font-size: var(--font-size-small);
+}
+
+/* Deviza-másodösszegek (HUF-kissorok): a <small>-nál is kisebbek. */
+.huf-sub {
+    font-size: 8pt;
 }
 
 /* ============================================
