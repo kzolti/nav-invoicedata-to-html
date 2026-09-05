@@ -303,6 +303,22 @@ body {
     margin: var(--spacing-sm) 0;
 }
 
+/* Batch-nézetben eltérő részlet-mező kiemelése (szürkeárnyalatos). */
+.detail-item.diff {
+    border-left: 3px solid var(--border-dark);
+}
+
+.detail-item.diff strong {
+    color: var(--text-primary);
+}
+
+.diff-note {
+    font-size: var(--font-size-small);
+    font-style: italic;
+    color: var(--text-secondary);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
 /* Extra data section at the end of the invoice (below the summary) */
 .invoice-extra-data {
     margin-top: var(--spacing-lg);
@@ -611,15 +627,6 @@ body {
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
     border-left: 4px solid var(--secondary-color);
-}
-
-/* Javító okirat megjegyzése számszerű hatás hiányában */
-.no-numeric-effect {
-    font-size: var(--font-size-base);
-    font-style: italic;
-    color: var(--text-secondary);
-    text-align: center;
-    margin: var(--spacing-lg) 0;
 }
 
 small {

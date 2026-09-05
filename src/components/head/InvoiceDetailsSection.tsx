@@ -7,11 +7,14 @@ interface Props {
     invoiceNumber?: string;
     invoiceIssueDate?: string;
     completenessIndicator?: boolean;
+    /** Batch-mezők, amelyek értéke a gyűjtő számlái között eltér (kiemelve). */
+    diffKeys?: Set<string>;
     t: TFn;
     nf: NFn;
 }
 
-export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf }: Props): string {
+export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, completenessIndicator, diffKeys, t, nf }: Props): string {
+    const cls = (key: string): string => (diffKeys?.has(key) ? 'detail-item diff' : 'detail-item');
     return (
         <div class="invoice-details">
             <h3>{t('invoiceDetails')}</h3>
@@ -30,49 +33,49 @@ export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, c
                         {invoiceIssueDate}
                     </div>
                 )}
-                <div class="detail-item">
+                <div class={cls('invoiceCategory')}>
                     <strong>{t('invoiceCategory')}:</strong>
                     {t(data.invoiceCategory)}
                 </div>
-                <div class="detail-item">
+                <div class={cls('invoiceDeliveryDate')}>
                     <strong>{t('invoiceDeliveryDate')}:</strong>
                     {data.invoiceDeliveryDate}
                 </div>
                 {data.invoiceDeliveryPeriodStart && (
-                    <div class="detail-item">
+                    <div class={cls('deliveryPeriod')}>
                         <strong>{t('deliveryPeriod')}:</strong>
                         {data.invoiceDeliveryPeriodStart} - {data.invoiceDeliveryPeriodEnd}
                     </div>
                 )}
                 {data.invoiceAccountingDeliveryDate && (
-                    <div class="detail-item">
+                    <div class={cls('accountingDeliveryDate')}>
                         <strong>{t('accountingDeliveryDate')}:</strong>
                         {data.invoiceAccountingDeliveryDate}
                     </div>
                 )}
-                <div class="detail-item">
+                <div class={cls('currency')}>
                     <strong>{t('currency')}:</strong>
                     {data.currencyCode}
                 </div>
                 {!(data.currencyCode === 'HUF' && Number(data.exchangeRate) === 1) && (
-                    <div class="detail-item">
+                    <div class={cls('exchangeRate')}>
                         <strong>{t('exchangeRate')}:</strong>
                         {nf(data.exchangeRate, countDecimals(data.exchangeRate))}
                     </div>
                 )}
                 {data.paymentMethod && (
-                    <div class="detail-item">
+                    <div class={cls('paymentMethod')}>
                         <strong>{t('paymentMethod')}:</strong>
                         {t(data.paymentMethod)}
                     </div>
                 )}
                 {data.paymentDate && (
-                    <div class="detail-item">
+                    <div class={cls('paymentDate')}>
                         <strong>{t('paymentDate')}:</strong>
                         {data.paymentDate}
                     </div>
                 )}
-                <div class="detail-item">
+                <div class={cls('appearance')}>
                     <strong>{t('appearance')}:</strong>
                     {t(data.invoiceAppearance)}
                 </div>

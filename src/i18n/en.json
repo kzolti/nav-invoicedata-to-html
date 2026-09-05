@@ -237,6 +237,5 @@
     "ARTWORK": "Artwork",
     "ANTIQUES": "Antiques",
     "seeLineItems": "See line items",
-    "seeReferences": "See the references",
-    "noNumericEffect": "No numerical effect"
+    "diffNote": "Highlighted data differs between the batched invoices"
 }

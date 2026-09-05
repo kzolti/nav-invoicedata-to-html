@@ -101,7 +101,7 @@ function collectAnnotatedLines(batches: BatchInvoice[]): AnnotatedLine[] {
 /**
  * Összevont számlaképet renderel több batchInvoice-ból, ha azok alapvető adatai megegyeznek.
  */
-export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIssueDate, completenessIndicator, correctionMode, t, nf, locale }: Props): string {
+export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale }: Props): string {
     const firstInvoice = batches[0].invoice;
 
     // Az egyéb (nem a könyvtárnak címzett) adatok összegyűjtése az összes batch-ből
@@ -114,10 +114,6 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
     // A batchek teljesítési dátumai eltérhetnek, ezért "Lásd a tételeknél" jelzés kell
     const deliveryDates = batches.map(b => b.invoice.invoiceHead.invoiceDetail.invoiceDeliveryDate);
     const hasMultipleDeliveryDates = new Set(deliveryDates).size > 1;
-
-    // Javító módban az eltérő fizetési határidők külön oszlopot kapnak.
-    const paymentDates = batches.map(b => b.invoice.invoiceHead.invoiceDetail.paymentDate);
-    const showPaymentDateColumn = new Set(paymentDates).size > 1;
 
     // Összevont Lines objektum az InvoiceLinesComponent számára
     const mergedLines: Lines = {
@@ -136,7 +132,6 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
             batchIndex: b.batchIndex,
             ref: b.invoice.invoiceReference!,
             deliveryDate: b.invoice.invoiceHead.invoiceDetail.invoiceDeliveryDate,
-            paymentDate: b.invoice.invoiceHead.invoiceDetail.paymentDate,
         }));
 
     // Összevont összesítés: a summaryGrossData összeadása
@@ -154,7 +149,6 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
                             <th>{t('originalInvoiceNumber')}</th>
                             <th>{t('modificationIndex')}</th>
                             <th>{t('invoiceDeliveryDate')}</th>
-                            {showPaymentDateColumn && <th>{t('paymentDate')}</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -163,7 +157,6 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
                                 <td>{esc(r.ref.originalInvoiceNumber)}</td>
                                 <td>{r.ref.modificationIndex}</td>
                                 <td>{r.deliveryDate}</td>
-                                {showPaymentDateColumn && <td>{r.paymentDate}</td>}
                             </tr>
                         )).join('')}
                     </tbody>
@@ -171,19 +164,17 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
             </div>
 
             {/* Fejléc az első batch-ből, de a teljesítési dátum módosítva */}
-            {renderMergedHead(firstInvoice, hasMultipleDeliveryDates, showPaymentDateColumn ? t('seeReferences') : undefined, t, nf, locale, invoiceNumber, invoiceIssueDate, completenessIndicator)}
+            {renderMergedHead(firstInvoice, hasMultipleDeliveryDates, t, nf, locale, invoiceNumber, invoiceIssueDate, completenessIndicator)}
 
-            {/* Összevont tételek a per-line metaadatokkal (javító módban nincsenek) */}
-            {annotatedLines.length > 0 && InvoiceLinesComponent({
+            {/* Összevont tételek a per-line metaadatokkal */}
+            {InvoiceLinesComponent({
                 data: mergedLines,
                 t,
                 nf,
             })}
 
-            {/* Összevont összesítés - javító módban számszerű hatás nélkül */}
-            {correctionMode
-                ? <p class="no-numeric-effect">{t('noNumericEffect')}</p>
-                : InvoiceSummaryComponent({ invoice: mergedInvoice, t, nf, locale })}
+            {/* Összevont összesítés */}
+            {InvoiceSummaryComponent({ invoice: mergedInvoice, t, nf, locale })}
 
             {/* Egyéb adatok az összesítő alatt */}
             {ExtraDataSection({ items: extraItems, t })}
@@ -199,7 +190,6 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
 function renderMergedHead(
     invoice: Invoice,
     hasMultipleDeliveryDates: boolean,
-    paymentDateOverride: string | undefined,
     t: TFn,
     nf: NFn,
     locale: string,
@@ -207,17 +197,16 @@ function renderMergedHead(
     invoiceIssueDate?: string,
     completenessIndicator?: boolean
 ): string {
-    if (!hasMultipleDeliveryDates && paymentDateOverride == null) {
+    if (!hasMultipleDeliveryDates) {
         return InvoiceHeadComponent({ data: invoice.invoiceHead, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale });
     }
 
-    // Clone the invoiceDetail to override the delivery/payment date display
+    // Clone the invoiceDetail to override the delivery date display
     const modifiedHead = {
         ...invoice.invoiceHead,
         invoiceDetail: {
             ...invoice.invoiceHead.invoiceDetail,
-            ...(hasMultipleDeliveryDates ? { invoiceDeliveryDate: t('seeLineItems') } : {}),
-            ...(paymentDateOverride != null ? { paymentDate: paymentDateOverride } : {}),
+            invoiceDeliveryDate: t('seeLineItems'),
         },
     };
 

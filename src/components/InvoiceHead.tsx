@@ -13,6 +13,7 @@ interface Props {
     invoiceNumber?: string;
     invoiceIssueDate?: string;
     completenessIndicator?: boolean;
+    diffKeys?: Set<string>;
     t: TFn;
     nf: NFn;
     locale: string;
@@ -23,6 +24,7 @@ export function InvoiceHeadComponent({
     invoiceNumber,
     invoiceIssueDate,
     completenessIndicator,
+    diffKeys,
     t,
     nf,
     locale,
@@ -43,6 +45,7 @@ export function InvoiceHeadComponent({
                 invoiceNumber,
                 invoiceIssueDate,
                 completenessIndicator,
+                diffKeys,
                 ...ctx,
             })}
         </div>

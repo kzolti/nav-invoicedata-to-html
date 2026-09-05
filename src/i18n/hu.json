@@ -229,6 +229,5 @@
     "ARTWORK": "Műalkotás",
     "ANTIQUES": "Antikvitás",
     "seeLineItems": "Lásd a tételeknél",
-    "seeReferences": "Lásd a hivatkozásoknál",
-    "noNumericEffect": "Nincs számszerű hatás"
+    "diffNote": "A kiemelt adatok a gyűjtő számlái között eltérnek"
 }

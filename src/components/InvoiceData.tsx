@@ -3,7 +3,7 @@ import type { TFn, NFn } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
-import { BatchMergedInvoiceComponent, canMergeBatches, canMergeAsCorrection } from './BatchMergedInvoice.js';
+import { BatchMergedInvoiceComponent, canMergeBatches } from './BatchMergedInvoice.js';
 import { asArray, esc } from './utils.js';
 import { splitSections, ExtraDataSection } from './sections.js';
 
@@ -14,6 +14,44 @@ interface Props {
     locale: string;
 }
 
+const DETAIL_DIFF_KEYS = [
+    'invoiceCategory',
+    'invoiceDeliveryDate',
+    'deliveryPeriod',
+    'accountingDeliveryDate',
+    'currency',
+    'exchangeRate',
+    'paymentMethod',
+    'paymentDate',
+    'appearance',
+];
+
+/** Gyűjtő számláinak összevetése: mely részlet-mezők értéke tér el. */
+function detailKeyValue(inv: Invoice, key: string): string {
+    const d = inv.invoiceHead?.invoiceDetail;
+    switch (key) {
+        case 'invoiceCategory': return d?.invoiceCategory ?? '';
+        case 'invoiceDeliveryDate': return d?.invoiceDeliveryDate ?? '';
+        case 'deliveryPeriod': return `${d?.invoiceDeliveryPeriodStart ?? ''}|${d?.invoiceDeliveryPeriodEnd ?? ''}`;
+        case 'accountingDeliveryDate': return d?.invoiceAccountingDeliveryDate ?? '';
+        case 'currency': return d?.currencyCode ?? '';
+        case 'exchangeRate': return d?.exchangeRate != null ? String(d.exchangeRate) : '';
+        case 'paymentMethod': return d?.paymentMethod ?? '';
+        case 'paymentDate': return d?.paymentDate ?? '';
+        case 'appearance': return d?.invoiceAppearance ?? '';
+        default: return '';
+    }
+}
+
+function computeDetailDiffKeys(invoices: Invoice[]): Set<string> {
+    const out = new Set<string>();
+    if (invoices.length < 2) return out;
+    for (const key of DETAIL_DIFF_KEYS) {
+        if (new Set(invoices.map(inv => detailKeyValue(inv, key))).size > 1) out.add(key);
+    }
+    return out;
+}
+
 export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
     let invoices: Invoice[] = [];
     let batchIndices: number[] = [];
@@ -22,9 +60,7 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
         const batch = asArray(data.invoiceMain.batchInvoice);
 
         // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
-        const merged = canMergeBatches(batch);
-        const correction = !merged && canMergeAsCorrection(batch);
-        if (merged || correction) {
+        if (canMergeBatches(batch)) {
             const firstSections = splitSections(batch[0].invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
             const title = firstSections.documentName?.dataValue ?? t('invoice');
             return (
@@ -37,7 +73,6 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                         invoiceNumber: data.invoiceNumber,
                         invoiceIssueDate: data.invoiceIssueDate,
                         completenessIndicator: data.completenessIndicator,
-                        correctionMode: correction,
                         t,
                         nf,
                         locale,
@@ -56,10 +91,15 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
     const docSections = splitSections(invoices[0]?.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
     const title = docSections.documentName?.dataValue ?? t('invoice');
 
+    // Gyűjtő nézetben a számlák között eltérő részlet-mezők kiemelése.
+    const detailDiffKeys = batchIndices.length > 0 ? computeDetailDiffKeys(invoices) : new Set<string>();
+
     return (
         <div class="invoice-container">
             <h1>{esc(title)}</h1>
             {docSections.documentDesc && <p class="document-desc">{esc(docSections.documentDesc.dataValue)}</p>}
+
+            {detailDiffKeys.size > 0 && <p class="diff-note">{t('diffNote')}</p>}
 
             {invoices.map((invoice, index) => {
                 const batchIndex = batchIndices[index];
@@ -99,6 +139,7 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                             invoiceNumber: data.invoiceNumber,
                             invoiceIssueDate: data.invoiceIssueDate,
                             completenessIndicator: data.completenessIndicator,
+                            diffKeys: detailDiffKeys,
                             t,
                             nf,
                             locale,
