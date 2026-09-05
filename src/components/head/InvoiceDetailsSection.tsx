@@ -4,17 +4,32 @@ import { esc, countDecimals } from '../utils.js';
 
 interface Props {
     data: InvoiceDetail;
+    invoiceNumber?: string;
+    invoiceIssueDate?: string;
+    completenessIndicator?: boolean;
     t: TFn;
     nf: NFn;
 }
 
-export function InvoiceDetailsSection({ data, t, nf }: Props): string {
+export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf }: Props): string {
     return (
         <div class="invoice-details">
             <h3>{t('invoiceDetails')}</h3>
 
             {/* Details grid */}
             <div class="details-grid">
+                {invoiceNumber && (
+                    <div class="detail-item">
+                        <strong>{t('invoiceNumber')}:</strong>
+                        {esc(invoiceNumber)}
+                    </div>
+                )}
+                {invoiceIssueDate && (
+                    <div class="detail-item">
+                        <strong>{t('invoiceIssueDate')}:</strong>
+                        {invoiceIssueDate}
+                    </div>
+                )}
                 <div class="detail-item">
                     <strong>{t('invoiceCategory')}:</strong>
                     {t(data.invoiceCategory)}
@@ -65,7 +80,7 @@ export function InvoiceDetailsSection({ data, t, nf }: Props): string {
 
             {/* Indicators */}
             <div class="indicators">
-                {data.smallBusinessIndicator && <span class="tag">{t('smallBusiness')}</span>}
+                {completenessIndicator && <span class="tag">{t('complete')}</span>}
                 {data.periodicalSettlement && <span class="tag">{t('periodicalSettlement')}</span>}
                 {data.cashAccountingIndicator && <span class="tag">{t('cashAccounting')}</span>}
                 {data.selfBillingIndicator && <span class="tag">{t('selfBilling')}</span>}

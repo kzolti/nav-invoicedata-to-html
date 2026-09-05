@@ -1,4 +1,4 @@
-import type { Lines, VatRate } from 'nav-osa-types';
+import type { Lines, Line, VatRate } from 'nav-osa-types';
 import type { TFn, NFn, DisplayLine } from './utils.js';
 import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice, vatCodeKey } from './utils.js';
 import { VatRateDisplay } from './VatRateDisplay.js';
@@ -67,6 +67,70 @@ const hasLineDetails = (line: DisplayLine, ambiguousVatCodes: Set<string>): bool
         line._annotatedDeliveryDate ||
         hasLineVatReason(line, ambiguousVatCodes));
 
+export type LegendEntryId = 'quantity' | 'unit' | 'unitPrice' | 'discountMain' | 'discountSub';
+
+export interface ColumnUsage {
+    quantity: boolean;
+    unit: boolean;
+    unitPrice: boolean;
+    discount: boolean;
+}
+
+const nonEmpty = (v: unknown): boolean => v != null && v !== '';
+
+/** Melyik rövidített oszlophoz van tényleges tartalom a számlán (jelölés + jelmagyarázat). */
+export function analyzeLineColumnUsage(lines: Line[]): ColumnUsage {
+    return {
+        quantity: lines.some(l => nonEmpty(l.quantity)),
+        unit: lines.some(l => !!l.unitOfMeasure || !!l.unitOfMeasureOwn),
+        unitPrice: lines.some(l => nonEmpty(l.unitPrice)),
+        discount: lines.some(l => !!l.lineDiscountData),
+    };
+}
+
+/** Jelmagyarázat-sorrend az oszlopok sorrendjében, csak a használtakkal. */
+export function legendOrder(usage: ColumnUsage): LegendEntryId[] {
+    const order: LegendEntryId[] = [];
+    if (usage.quantity) order.push('quantity');
+    if (usage.unit) order.push('unit');
+    if (usage.unitPrice) order.push('unitPrice');
+    if (usage.discount) order.push('discountMain', 'discountSub');
+    return order;
+}
+
+function legendText(id: LegendEntryId, t: TFn): { abbr: string; full: string } {
+    switch (id) {
+        case 'quantity': return { abbr: t('quantity'), full: t('quantityTitle') };
+        case 'unit': return { abbr: t('unitOfMeasure'), full: t('unitOfMeasureTitle') };
+        case 'unitPrice': return { abbr: t('colUnitPrice'), full: t('unitPrice') };
+        case 'discountMain': return { abbr: t('discount').split('\n')[0], full: t('discountWord') };
+        case 'discountSub': {
+            const parts = t('discount').split('\n');
+            return { abbr: parts[1] ?? parts[0], full: t('discountedUnitPrice') };
+        }
+    }
+}
+
+const supNum = (order: LegendEntryId[], id: LegendEntryId): string => {
+    const i = order.indexOf(id);
+    return i >= 0 ? `<sup>${i + 1}</sup>` : '';
+};
+
+/** Oszloprövidítések jelmagyarázata a számla aljára (csak a használt oszlopok). */
+export function ColumnLegend({ lines, t }: { lines: Line[]; t: TFn }): string {
+    if (lines.length === 0) return '';
+    const order = legendOrder(analyzeLineColumnUsage(lines));
+    if (order.length === 0) return '';
+    return (
+        <div class="column-legend">
+            {order.map(id => {
+                const e = legendText(id, t);
+                return `<p><sup>${order.indexOf(id) + 1}</sup> ${esc(e.abbr)} – ${esc(e.full)}</p>`;
+            }).join('')}
+        </div>
+    ) as string;
+}
+
 const getDiscountedUnitPrice = (line: DisplayLine, scale?: number): string => {
     const discountData = line.lineDiscountData;
     if (!discountData) {
@@ -105,9 +169,11 @@ function computeColumnDecimals(lines: DisplayLine[]) {
 }
 
 /**
- * Oszlopszélességek karakterszám-arányosan: minden oszlop a leghosszabb
- * megjelenített cellatartalma (fejléc + sorok, formázás után mérve) alapján
- * kap `<col>` szélességet. Mindig fut, a táblázat képe determinisztikus.
+ * Oszlopszélességek abszolút karakterszélesség-skálán: a Megnevezés kivételével
+ * minden oszlop a leghosszabb megjelenített cellatartalma (fejléc + sorok,
+ * formázás után mérve) alapján kap `<col>` szélességet (min. 4%). A megspórolt
+ * hely a Megnevezésben halmozódik (min. 15%), mert ott kell a hely. Mindig
+ * fut, a táblázat képe determinisztikus.
  */
 function computeColumnWidths(
     lines: DisplayLine[],
@@ -135,28 +201,31 @@ function computeColumnWidths(
                 ? nf(dd.discountValue, colDecs.discount)
                 : '-';
         const second = nf(getDiscountedUnitPrice(line, colDecs.discountedUnitPrice), colDecs.discountedUnitPrice);
-        return Math.max(first.length, second.length);
+        // A második sor (kedvezményes egységár) <small>-ban jelenik meg, vizuálisan szűkebb
+        return Math.max(first.length, Math.ceil(second.length * 0.75));
     };
     // Nettó / ÁFA / Bruttó cellahosszak (egyszerűsített sornál a colspan=2
     // cella fele-fele arányban a nettó+áfa oszlopokra terhelve).
+    // A másodlagos HUF-kissort <small> méretben rendereljük új sorban,
+    // így a tényleges vizuális szélességigénye kb. 0.7x-es a normál szöveghez képest.
     const amountCellLens = (line: DisplayLine): number[] => {
         const la = line.lineAmountsNormal;
         if (la) {
-            const hufLen = (v: string | number | undefined, decs: number): number =>
-                v ? nf(v, decs).length + 4 : 0; // ' HUF'
+            const hufLen = (v: string | number | undefined, base: string | number | undefined, decs: number): number =>
+                v && v !== base ? Math.ceil((nf(v, decs).length + 4) * 0.7) : 0;
             return [
                 Math.max(
                     nf(la.lineNetAmountData?.lineNetAmount ?? '', colDecs.netAmount).length,
-                    hufLen(la.lineNetAmountData?.lineNetAmountHUF, colDecs.netAmount)
+                    hufLen(la.lineNetAmountData?.lineNetAmountHUF, la.lineNetAmountData?.lineNetAmount, colDecs.netAmount)
                 ),
                 Math.max(
                     la.lineVatData ? nf(la.lineVatData.lineVatAmount ?? '', colDecs.vatAmount).length : 1,
-                    la.lineVatData ? hufLen(la.lineVatData.lineVatAmountHUF, colDecs.vatAmount) : 0,
-                    vatLabelLen(line)
+                    la.lineVatData ? hufLen(la.lineVatData.lineVatAmountHUF, la.lineVatData.lineVatAmount, colDecs.vatAmount) : 0,
+                    Math.ceil(vatLabelLen(line) * 0.75)
                 ),
                 Math.max(
                     nf(la.lineGrossAmountData?.lineGrossAmountNormal ?? '', colDecs.grossAmount).length,
-                    hufLen(la.lineGrossAmountData?.lineGrossAmountNormalHUF, colDecs.grossAmount)
+                    hufLen(la.lineGrossAmountData?.lineGrossAmountNormalHUF, la.lineGrossAmountData?.lineGrossAmountNormal, colDecs.grossAmount)
                 ),
             ];
         }
@@ -168,8 +237,8 @@ function computeColumnWidths(
                 Math.floor(combined / 2),
                 Math.max(
                     nf(laS.lineGrossAmountSimplified, colDecs.grossAmount).length,
-                    laS.lineGrossAmountSimplifiedHUF
-                        ? nf(laS.lineGrossAmountSimplifiedHUF, colDecs.grossAmount).length + 4 : 0
+                    laS.lineGrossAmountSimplifiedHUF && laS.lineGrossAmountSimplifiedHUF !== laS.lineGrossAmountSimplified
+                        ? Math.ceil((nf(laS.lineGrossAmountSimplifiedHUF, colDecs.grossAmount).length + 4) * 0.7) : 0
                 ),
             ];
         }
@@ -179,30 +248,29 @@ function computeColumnWidths(
     // Oszlopsorrend a thead szerint (kedvezmény nélkül 8, vele 9 oszlop).
     const maxLens: number[] = [
         1, // #
-        t('description').length,
-        t('quantity').length,
-        t('unitOfMeasure').length,
-        t('unitPrice').length,
-        ...(hasDiscount ? [Math.max(...t('discount').split('\n').map(s => s.length), 0)] : []),
-        t('netAmount').length,
-        t('vatAmount').length,
-        t('grossAmount').length,
+        0, // Megnevezés (helyfoglaló)
+        t('quantity').length + 1,
+        t('unitOfMeasure').length + 1,
+        t('colUnitPrice').length + 1,
+        ...(hasDiscount ? [Math.max(...t('discount').split('\n').map(s => s.length + 1), 0)] : []),
+        t('colNet').length,
+        t('colVat').length,
+        t('colGross').length,
     ];
 
     lines.forEach((line, li) => {
         const cols: number[] = [
             String(line.lineNumber ?? li + 1).length,
-            (line.lineDescription ?? '').length +
-                (line.lineNatureIndicator ? 1 + t(line.lineNatureIndicator).length : 0),
+            0,
             nf(line.quantity ?? '', colDecs.quantity).length,
             Math.max(
                 (line.unitOfMeasure ? t(line.unitOfMeasure) : '-').length,
-                line.unitOfMeasureOwn ? line.unitOfMeasureOwn.length + 2 : 0
+                line.unitOfMeasureOwn ? Math.ceil((line.unitOfMeasureOwn.length + 2) * 0.75) : 0
             ),
             Math.max(
                 nf(line.unitPrice ?? '', colDecs.unitPrice).length,
                 line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice
-                    ? nf(line.unitPriceHUF, colDecs.unitPrice).length + 4 : 0
+                    ? Math.ceil((nf(line.unitPriceHUF, colDecs.unitPrice).length + 4) * 0.7) : 0
             ),
             ...(hasDiscount ? [discountCellLen(line)] : []),
             ...amountCellLens(line),
@@ -210,15 +278,41 @@ function computeColumnWidths(
         cols.forEach((len, i) => { maxLens[i] = Math.max(maxLens[i] ?? 0, len); });
     });
 
-    // Arányosítás 100%-ra; padló: megnevezés min. 15%, a többi min. 4%.
-    const total = maxLens.reduce((a, b) => a + b, 0) || 1;
-    const raw = maxLens.map((len, i) => Math.max((len / total) * 100, i === 1 ? 15 : 4));
-    const sum = raw.reduce((a, b) => a + b, 0);
-    const scaled = raw.map(p => (p * 100) / sum);
+    // Oszlopok szélessége A4 nyomtatási környezethez kalibrálva:
+    // Alap padding + keret oszloponként: ~1.8% (kb. 5-6px cellapadding mindkét oldalon).
+    // Karakterarány: ~0.82% karakterenként (9pt-s tabular-nums számjegyek és
+    // kb. 700-740px hasznos A4 nyomtatási szélesség aránya).
+    // A Megnevezés (1. index) a megspórolt teljes fennmaradó helyet kapja meg.
+    const DESC = 1;
+    const COL_BASE = 1.8;
+    const CHAR_SCALE = 0.82;
+
+    const minWidths = [
+        2.8, // #
+        15.0, // Megnevezés floor
+        4.5, // M.
+        4.5, // M.e.
+        6.0, // N.e.ár
+        ...(hasDiscount ? [6.8] : []), // Kedv.
+        7.2, // Nettó
+        6.8, // ÁFA
+        7.2, // Bruttó
+    ];
+
+    const raw = maxLens.map((len, i) => {
+        if (i === DESC) return 0;
+        const calc = COL_BASE + len * CHAR_SCALE;
+        return Math.max(calc, minWidths[i] ?? 4.0);
+    });
+
+    const sumOthers = raw.reduce((a, b) => a + b, 0);
+    // Ha a numerikus oszlopok összege meghaladná a 65%-ot, arányosan visszaskálázzuk,
+    // hogy a Megnevezésnek mindig jusson legalább 35% hely.
+    const maxOthers = 65;
+    const scaled = raw.map(p => (sumOthers > maxOthers ? (p * maxOthers) / sumOthers : p));
     const floored = scaled.map(p => Math.floor(p * 10) / 10);
-    const rest = Math.round((100 - floored.reduce((a, b) => a + b, 0)) * 10) / 10;
-    const biggest = scaled.indexOf(Math.max(...scaled));
-    floored[biggest] = Math.round(((floored[biggest] ?? 0) + rest) * 10) / 10;
+    const used = floored.reduce((a, b) => a + b, 0);
+    floored[DESC] = Math.round((100 - used) * 10) / 10;
     return floored.map(w => w.toFixed(1));
 }
 
@@ -229,6 +323,7 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
     const totalCols = 9 - (hasDiscount ? 0 : 1);
     const ambiguousVatCodes = computeAmbiguousVatCodes(lines);
     const colWidths = computeColumnWidths(lines, colDecs, hasDiscount, t, nf);
+    const order = legendOrder(analyzeLineColumnUsage(lines));
 
     return (
         <div class="invoice-lines">
@@ -250,13 +345,13 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
                     <tr>
                         <th>#</th>
                         <th>{t('description')}</th>
-                        <th class="text-right" title={t('quantityTitle')}>{t('quantity')}</th>
-                        <th class="text-right" title={t('unitOfMeasureTitle')}>{t('unitOfMeasure')}</th>
-                        <th class="text-right">{t('unitPrice')}</th>
-                        {hasDiscount && DiscountHeader({ t })}
-                        <th class="text-right">{t('netAmount')}</th>
-                        <th class="text-right">{t('vatAmount')}</th>
-                        <th class="text-right">{t('grossAmount')}</th>
+                        <th class="text-right">{t('quantity')}{supNum(order, 'quantity')}</th>
+                        <th class="text-right">{t('unitOfMeasure')}{supNum(order, 'unit')}</th>
+                        <th class="text-right">{t('colUnitPrice')}{supNum(order, 'unitPrice')}</th>
+                        {hasDiscount && DiscountHeader({ t, supMain: supNum(order, 'discountMain'), supSub: supNum(order, 'discountSub') })}
+                        <th class="text-right">{t('colNet')}</th>
+                        <th class="text-right">{t('colVat')}</th>
+                        <th class="text-right">{t('colGross')}</th>
                     </tr>
                 </thead>
 
@@ -266,13 +361,15 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
     ) as string;
 }
 
-function DiscountHeader({ t }: { t: TFn }): string {
+function DiscountHeader({ t, supMain, supSub }: { t: TFn; supMain: string; supSub: string }): string {
     const lines = t('discount').split('\n');
     return (
-        <th class="text-right" title={t('discountTitle')}>
+        <th class="text-right">
             {lines.map((line, i) => (
                 <span class={i > 0 ? 'header-sub' : undefined}>
                     {line}
+                    {i === 0 ? supMain : ''}
+                    {i === lines.length - 1 && i > 0 ? supSub : ''}
                     {i < lines.length - 1 && <br />}
                 </span>
             ))}
@@ -295,7 +392,7 @@ function renderLineGroup(line: DisplayLine, idx: number, colDecs: ReturnType<typ
                     <td colspan={String(totalCols - 1)}>
                         <div class="line-details">
                             {LineBasicDetails({ line, t })}
-                            {LineExtendedDetails({ line, t, ambiguousVatCodes })}
+                            {LineExtendedDetails({ line, t, nf, ambiguousVatCodes })}
                         </div>
                     </td>
                 </tr>
@@ -331,8 +428,7 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
             </td>
 
             {hasDiscount && (
-                <td class="text-right" style="white-space: nowrap;"
-                    title={buildDiscountTitle(line, colDecs, t, nf)}>
+                <td class="text-right" style="white-space: nowrap;">
                     {renderDiscountCell(line, colDecs, t, nf)}
                     {line.lineDiscountData && (<>
                         <br /><small>{nf(getDiscountedUnitPrice(line, colDecs.discountedUnitPrice), colDecs.discountedUnitPrice)}</small>
@@ -343,16 +439,6 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
             {renderAmountCells(line, colDecs, t, nf)}
         </tr>
     ) as string;
-}
-
-function buildDiscountTitle(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {
-    const dd = line.lineDiscountData;
-    if (!dd) return '';
-    const parts: string[] = [];
-    if (dd.discountDescription) parts.push(esc(dd.discountDescription));
-    if (dd.discountValue != null) parts.push(`${t('discountValue')}: ${nf(dd.discountValue, colDecs.discount)}`);
-    if (dd.discountRate != null) parts.push(`${t('discountRate')}: ${nf(dd.discountRate, countDecimals(dd.discountRate))}%`);
-    return parts.join('\n');
 }
 
 function renderDiscountCell(line: DisplayLine, colDecs: ReturnType<typeof computeColumnDecimals>, t: TFn, nf: NFn): string {

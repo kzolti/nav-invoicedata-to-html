@@ -7,7 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Témafelülírás env-ből: IDTOHTML_CSS=compact -> src/styles/invoice-compact.css.
 // Alapból (üres) a default beágyazott stílus, ill. az XML-ben választott téma él.
+// Nyelv: IDTOHTML_LOCALE=en -> angol számlakép (alapból hu).
 const themeId = (process.env.IDTOHTML_CSS ?? '').trim().toLowerCase();
+const locale = (process.env.IDTOHTML_LOCALE ?? 'hu').trim().toLowerCase() || 'hu';
 
 async function loadThemeCss(): Promise<string | undefined> {
     if (!themeId || !/^[a-z0-9_-]{1,32}$/.test(themeId)) return undefined;
@@ -40,11 +42,13 @@ async function main() {
         console.log(`Found ${xmlFiles.length} XML files in ${examplesDir}`);
         const themeCss = await loadThemeCss();
         if (themeCss) console.log(`Using theme override: ${themeId}`);
+        console.log(`Using locale: ${locale}`);
 
         for (const file of xmlFiles) {
             const xmlPath = path.join(examplesDir, file);
             const base = file.replace('.xml', '');
-            const outputFilename = themeCss ? `${base}.${themeId}.html` : `${base}.html`;
+            const localeSuffix = locale === 'hu' ? '' : `.${locale}`;
+            const outputFilename = themeCss ? `${base}.${themeId}${localeSuffix}.html` : `${base}${localeSuffix}.html`;
             const outputPath = path.join(outputDir, outputFilename);
 
             console.log(`Processing ${file}...`);
@@ -56,7 +60,7 @@ async function main() {
 
                 const xmlContent = await fs.readFile(xmlPath, 'utf-8');
                 const html = await generateInvoiceHtml(xmlContent, {
-                    locale: 'hu',
+                    locale,
                     ...(themeCss ? { cssConfig: { inline: themeCss } } : {}),
                 });
                 await fs.writeFile(outputPath, html);

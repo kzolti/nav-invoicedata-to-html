@@ -1,9 +1,9 @@
 import type { InvoiceData as InvoiceDataType, Invoice } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
-import { InvoiceLinesComponent } from './InvoiceLines.js';
+import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
-import { BatchMergedInvoiceComponent, canMergeBatches } from './BatchMergedInvoice.js';
+import { BatchMergedInvoiceComponent, canMergeBatches, canMergeAsCorrection } from './BatchMergedInvoice.js';
 import { asArray, esc } from './utils.js';
 import { splitSections, ExtraDataSection } from './sections.js';
 
@@ -22,24 +22,26 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
         const batch = asArray(data.invoiceMain.batchInvoice);
 
         // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
-        if (canMergeBatches(batch)) {
+        const merged = canMergeBatches(batch);
+        const correction = !merged && canMergeAsCorrection(batch);
+        if (merged || correction) {
             const firstSections = splitSections(batch[0].invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
             const title = firstSections.documentName?.dataValue ?? t('invoice');
             return (
                 <div class="invoice-container">
                     <h1>{esc(title)}</h1>
                     {firstSections.documentDesc && <p class="document-desc">{esc(firstSections.documentDesc.dataValue)}</p>}
-                    <div class="invoice-metadata">
-                        <p><strong>{t('invoiceNumber')}:</strong> {esc(data.invoiceNumber)}</p>
-                        <p><strong>{t('invoiceIssueDate')}:</strong> {data.invoiceIssueDate}</p>
-                        {data.completenessIndicator && (
-                            <p>
-                                <strong>{t('complete')}</strong>
-                            </p>
-                        )}
-                    </div>
 
-                    {BatchMergedInvoiceComponent({ batches: batch, t, nf, locale })}
+                    {BatchMergedInvoiceComponent({
+                        batches: batch,
+                        invoiceNumber: data.invoiceNumber,
+                        invoiceIssueDate: data.invoiceIssueDate,
+                        completenessIndicator: data.completenessIndicator,
+                        correctionMode: correction,
+                        t,
+                        nf,
+                        locale,
+                    })}
                 </div>
             ) as string;
         }
@@ -58,15 +60,6 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
         <div class="invoice-container">
             <h1>{esc(title)}</h1>
             {docSections.documentDesc && <p class="document-desc">{esc(docSections.documentDesc.dataValue)}</p>}
-            <div class="invoice-metadata">
-                <p><strong>{t('invoiceNumber')}:</strong> {esc(data.invoiceNumber)}</p>
-                <p><strong>{t('invoiceIssueDate')}:</strong> {data.invoiceIssueDate}</p>
-                {data.completenessIndicator && (
-                    <p>
-                        <strong>{t('complete')}</strong>
-                    </p>
-                )}
-            </div>
 
             {invoices.map((invoice, index) => {
                 const batchIndex = batchIndices[index];
@@ -101,13 +94,23 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                             </div>
                         )}
 
-                        {invoice.invoiceHead && InvoiceHeadComponent({ data: invoice.invoiceHead, t, nf, locale })}
+                        {invoice.invoiceHead && InvoiceHeadComponent({
+                            data: invoice.invoiceHead,
+                            invoiceNumber: data.invoiceNumber,
+                            invoiceIssueDate: data.invoiceIssueDate,
+                            completenessIndicator: data.completenessIndicator,
+                            t,
+                            nf,
+                            locale,
+                        })}
 
                         {invoice.invoiceLines && InvoiceLinesComponent({ data: invoice.invoiceLines, t, nf })}
 
-                        {invoice.invoiceSummary && InvoiceSummaryComponent({ invoice, t, nf })}
+                        {invoice.invoiceSummary && InvoiceSummaryComponent({ invoice, t, nf, locale })}
 
                         {ExtraDataSection({ items: sections.other, t })}
+
+                        {invoice.invoiceLines && ColumnLegend({ lines: asArray(invoice.invoiceLines.line), t })}
                     </div>
                 );
             }).join('')}

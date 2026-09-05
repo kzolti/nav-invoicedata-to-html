@@ -28,11 +28,7 @@ export function VatRateDisplay({ vatRate, t, nf }: Props): string {
         label = t('vatExempt');
     }
 
-    const mismatch = vatRate.vatAmountMismatch
-        ? `<br /><small class="vat-mismatch-note">⚠️ ${t('vatAmountMismatch')}: ${nf(vatRate.vatAmountMismatch.vatRate, countDecimals(vatRate.vatAmountMismatch.vatRate))}% (${vatRate.vatAmountMismatch.case})</small>`
-        : '';
-
-    return label + mismatch;
+    return label;
 }
 
 /** Small note with the exemption / out-of-scope reason, if any (for wide cells, e.g. summary tables) */

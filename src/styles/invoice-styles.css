@@ -310,6 +310,19 @@ body {
     padding-top: var(--spacing-md);
 }
 
+/* Column abbreviation legend at the bottom of the invoice */
+.column-legend {
+    margin-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-dark);
+    padding-top: var(--spacing-sm);
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+}
+
+.column-legend p {
+    margin: var(--spacing-xs) 0;
+}
+
 .invoice-extra-data ul {
     list-style: none;
     padding: 0;
@@ -380,7 +393,7 @@ body {
 
 .lines-table th,
 .lines-table td {
-    padding: var(--spacing-sm);
+    padding: 6px 5px;
     border: 1px solid var(--border-color);
     text-align: left;
     overflow-wrap: break-word;
@@ -394,6 +407,12 @@ body {
 
 .lines-table thead th {
     border-color: var(--bg-invoice-header);
+    border-right: 1px solid #fff;
+    white-space: nowrap;
+}
+
+.lines-table thead th:last-child {
+    border-right-color: var(--bg-invoice-header);
 }
 
 .lines-table thead .header-sub {
@@ -510,8 +529,40 @@ body {
 }
 
 .summary-table thead {
-    background: var(--bg-secondary);
+    background: var(--bg-invoice-header);
+    color: white;
     font-weight: 600;
+}
+
+.summary-table thead th,
+.reference-table thead th {
+    border-color: var(--bg-invoice-header);
+    border-right: 1px solid #fff;
+}
+
+.summary-table thead th:last-child,
+.reference-table thead th:last-child {
+    border-right-color: var(--bg-invoice-header);
+}
+
+.summary-table.fee-detail-table thead {
+    background: var(--bg-invoice-header);
+    color: white;
+}
+
+.summary-table.fee-detail-table thead th {
+    border-color: var(--bg-invoice-header);
+    border-right: 1px solid #fff;
+}
+
+.summary-table.fee-detail-table thead th:last-child {
+    border-right-color: var(--bg-invoice-header);
+}
+
+.summary-table tfoot .summary-total-row td {
+    font-weight: 600;
+    background: var(--bg-secondary);
+    border-top: 2px solid var(--border-dark);
 }
 
 .summary-table .text-right,
@@ -526,14 +577,27 @@ body {
     font-weight: 600;
 }
 
-.gross-total {
-    background: #fffbea;
-    border: 3px solid var(--border-dark);
+/* Keret nélküli összesen-blokkok (termékdíj / számla bruttó): azonos
+   szélesség, igazítás és betűméretek. */
+.total-block {
+    width: 60%;
+    margin-left: auto;
+    margin-bottom: var(--spacing-lg);
 }
 
-.total-row td {
+.total-line {
+    text-align: right;
     font-size: var(--font-size-large);
-    padding: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    font-weight: 600;
+}
+
+.total-words {
+    text-align: right;
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: var(--font-size-small);
+    margin-top: 0;
 }
 
 .vat-breakdown,
@@ -549,16 +613,13 @@ body {
     border-left: 4px solid var(--secondary-color);
 }
 
-.fee-total {
-    text-align: right;
-    font-size: var(--font-size-large);
-    margin-top: var(--spacing-md);
-    font-weight: 600;
-}
-
-.vat-mismatch-note {
-    color: var(--accent-color);
-    font-weight: bold;
+/* Javító okirat megjegyzése számszerű hatás hiányában */
+.no-numeric-effect {
+    font-size: var(--font-size-base);
+    font-style: italic;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: var(--spacing-lg) 0;
 }
 
 small {

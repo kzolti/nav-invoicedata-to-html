@@ -1,15 +1,38 @@
-import type { SummaryByVatRate } from 'nav-osa-types';
+import type { SummaryByVatRate, SummaryNormal } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
+import { addDecimal, countDecimals, getTargetDecimals } from '../utils.js';
 import { VatRateDisplay, VatRateReasonNote } from '../VatRateDisplay.js';
+
+interface TotalsProps {
+    data: SummaryNormal;
+    netDecs: number;
+    vatDecs: number;
+    /** Fizetendő bruttó (summaryGrossData-ból, ha van) — egyébként nettó+áfa. */
+    gross?: string | null;
+    grossHUF?: string | null;
+    grossDecs?: number;
+}
 
 interface Props {
     vatRateLines: SummaryByVatRate[];
     vatDecs: { net: number; vat: number; gross: number };
+    /** Összesen lábléc-sor a táblázat alján (a külön összesítő tábla helyett). */
+    totals?: TotalsProps;
     t: TFn;
     nf: NFn;
 }
 
-export function VatBreakdownTable({ vatRateLines, vatDecs, t, nf }: Props): string {
+export function VatBreakdownTable({ vatRateLines, vatDecs, totals, t, nf }: Props): string {
+    const gross = totals ? (totals.gross ?? addDecimal(totals.data.invoiceNetAmount, totals.data.invoiceVatAmount)) : null;
+    const grossDecs = totals
+        ? (totals.grossDecs ?? getTargetDecimals(Math.max(countDecimals(totals.data.invoiceNetAmount), countDecimals(totals.data.invoiceVatAmount))))
+        : 0;
+    const grossHuf = totals?.grossHUF ?? (
+        totals?.data.invoiceNetAmountHUF != null && totals?.data.invoiceVatAmountHUF != null
+            ? addDecimal(totals.data.invoiceNetAmountHUF, totals.data.invoiceVatAmountHUF)
+            : null
+    );
+    const showGrossHuf = totals != null && grossHuf != null && grossHuf !== gross;
     return (
         <div class="vat-breakdown">
             <h4>{t('vatBreakdown')}</h4>
@@ -49,6 +72,28 @@ export function VatBreakdownTable({ vatRateLines, vatDecs, t, nf }: Props): stri
                         </tr>
                     )).join('')}
                 </tbody>
+                {totals && (
+                    <tfoot>
+                        <tr class="summary-total-row">
+                            <td>{t('total')}:</td>
+                            <td class="text-right" style="white-space: nowrap;">
+                                {nf(totals.data.invoiceNetAmount, totals.netDecs)}
+                                {totals.data.invoiceNetAmountHUF && totals.data.invoiceNetAmountHUF !== totals.data.invoiceNetAmount &&
+                                    (<><br /><small>{nf(totals.data.invoiceNetAmountHUF, totals.netDecs)} HUF</small></>)}
+                            </td>
+                            <td class="text-right" style="white-space: nowrap;">
+                                {nf(totals.data.invoiceVatAmount, totals.vatDecs)}
+                                {totals.data.invoiceVatAmountHUF && totals.data.invoiceVatAmountHUF !== totals.data.invoiceVatAmount &&
+                                    (<><br /><small>{nf(totals.data.invoiceVatAmountHUF, totals.vatDecs)} HUF</small></>)}
+                            </td>
+                            <td class="text-right" style="white-space: nowrap;">
+                                {gross != null && nf(gross, grossDecs)}
+                                {showGrossHuf && grossHuf != null &&
+                                    (<><br /><small>{nf(grossHuf, grossDecs)} HUF</small></>)}
+                            </td>
+                        </tr>
+                    </tfoot>
+                )}
             </table>
         </div>
     ) as string;

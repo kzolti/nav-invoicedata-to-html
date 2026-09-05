@@ -98,7 +98,7 @@ body {
 
 .party {
     border-radius: 0;
-    border: 1px solid #000;
+    border: none;
     background: #fff;
     padding: 0 0 var(--spacing-sm) 0;
 }
@@ -106,11 +106,11 @@ body {
 .party.supplier,
 .party.customer,
 .party.fiscal-rep {
-    border-left: 1px solid #000;
+    border: none;
 }
 
 .party + .party {
-    border-left: none;
+    border: none;
 }
 
 .party h3 {
@@ -118,6 +118,10 @@ body {
     color: #fff;
     border-bottom: none;
     padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.party + .party h3 {
+    border-left: 1px solid #fff;
 }
 
 .party p {
@@ -152,6 +156,9 @@ body {
 .badge {
     border-radius: 0;
     padding: 1px 5px;
+    background: #fff;
+    color: var(--text-primary);
+    border: 1px solid var(--border-dark);
 }
 
 /* Tételtábla sűrítve */
@@ -164,6 +171,16 @@ body {
     background: var(--bg-invoice-header);
 }
 
+.lines-table thead th {
+    border-color: var(--bg-invoice-header);
+    border-right: 1px solid #fff;
+    white-space: nowrap;
+}
+
+.lines-table thead th:last-child {
+    border-right-color: var(--bg-invoice-header);
+}
+
 .batch-header,
 .merged-warning,
 .invoice-reference {
@@ -171,6 +188,13 @@ body {
     margin-bottom: var(--spacing-md);
     border-radius: 0;
     border-left: 1px solid #000;
+    background: #fff;
+    color: var(--text-primary);
+}
+
+.batch-header h2,
+.invoice-reference h3 {
+    color: var(--text-primary);
 }
 
 .line-details {
@@ -194,6 +218,22 @@ body {
     padding: 4px 6px;
 }
 
+.summary-table thead {
+    background: var(--bg-invoice-header);
+    color: #fff;
+}
+
+.summary-table thead th,
+.reference-table thead th {
+    border-color: var(--bg-invoice-header);
+    border-right: 1px solid #fff;
+}
+
+.summary-table thead th:last-child,
+.reference-table thead th:last-child {
+    border-right-color: var(--bg-invoice-header);
+}
+
 .summary-table,
 .totals-table {
     margin-bottom: var(--spacing-md);
@@ -203,9 +243,8 @@ body {
     width: 55%;
 }
 
-.total-row td {
-    font-size: var(--font-size-base);
-    padding: var(--spacing-sm);
+.total-block {
+    width: 55%;
 }
 
 .vat-breakdown,
@@ -215,6 +254,7 @@ body {
 }
 
 .fee-group {
+    background: #fff;
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border: none;

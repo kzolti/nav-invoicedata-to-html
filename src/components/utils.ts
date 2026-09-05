@@ -1,4 +1,4 @@
-import type { AddressType, TaxNumberType, DetailedAddressType, SimpleAddressType, Line, VatRate } from 'nav-osa-types';
+import type { AddressType, TaxNumberType, DetailedAddressType, SimpleAddressType, Line, VatRate, SummaryNormal, SummaryGrossData } from 'nav-osa-types';
 
 import { escapeHtml } from '@kitajs/html';
 
@@ -206,6 +206,50 @@ export const getTargetDecimals = (maxDec: number): number => {
 export function stripTrailingZeros(s: string): string {
     if (!s.includes('.')) return s;
     return s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+}
+
+/** Trim insignificant fraction zeros without value loss ("50.000" -> "50", "5.5" stays). */
+export function trimDecimalString(val: number | string | null | undefined): string | null {
+    const s = toDecimalString(val);
+    return s == null ? null : stripTrailingZeros(s);
+}
+
+/** Locale-formatted number without insignificant zeros, '-' for missing values. */
+export function nfTrimmed(val: number | string | null | undefined, nf: NFn): string {
+    const trimmed = trimDecimalString(val);
+    return trimmed != null ? nf(trimmed, 0) : '-';
+}
+
+/** Nulla (vagy hiányzó) pénzösszeg? "0", "0.00", "", null → true. */
+export function isZeroAmount(val: number | string | null | undefined): boolean {
+    if (val == null || val === '') return true;
+    const s = toDecimalString(val);
+    if (s == null) return true;
+    return /^-?0*(\.0*)?$/.test(s);
+}
+
+/** Van-e számszerű hatása a normál összesítőnek (kulcs- és HUF-értékek)? */
+export function normalSummaryHasEffect(data: SummaryNormal | undefined | null): boolean {
+    if (data == null) return false;
+    for (const l of asArray(data.summaryByVatRate)) {
+        if (!isZeroAmount(l.vatRateNetData?.vatRateNetAmount)) return true;
+        if (!isZeroAmount(l.vatRateNetData?.vatRateNetAmountHUF)) return true;
+        if (!isZeroAmount(l.vatRateVatData?.vatRateVatAmount)) return true;
+        if (!isZeroAmount(l.vatRateVatData?.vatRateVatAmountHUF)) return true;
+    }
+    if (!isZeroAmount(data.invoiceNetAmount)) return true;
+    if (!isZeroAmount(data.invoiceNetAmountHUF)) return true;
+    if (!isZeroAmount(data.invoiceVatAmount)) return true;
+    if (!isZeroAmount(data.invoiceVatAmountHUF)) return true;
+    return false;
+}
+
+/** Van-e számszerű hatása a bruttó összesítőnek? */
+export function grossSummaryHasEffect(data: SummaryGrossData | undefined | null): boolean {
+    if (data == null) return false;
+    if (!isZeroAmount(data.invoiceGrossAmount)) return true;
+    if (!isZeroAmount(data.invoiceGrossAmountHUF)) return true;
+    return false;
 }
 
 function parseParts(s: string): { neg: boolean; intPart: string; frac: string } {

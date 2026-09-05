@@ -1,14 +1,26 @@
-import type { TFn, DisplayLine } from '../utils.js';
+import type { TFn, NFn, DisplayLine } from '../utils.js';
 import type { ProductFeeData } from 'nav-osa-types';
-import { asArray, getAddressLine1, esc, vatCodeKey } from '../utils.js';
+import { asArray, getAddressLine1, esc, vatCodeKey, nfTrimmed } from '../utils.js';
 
 interface Props {
     line: DisplayLine;
     t: TFn;
+    nf: NFn;
     ambiguousVatCodes: Set<string>;
 }
 
-export function LineExtendedDetails({ line, t, ambiguousVatCodes }: Props): string {
+/**
+ * Termékáram-címke: a PAPER/ELECTRONIC kódokhoz saját kulcs kell, mert a
+ * globális PAPER ("Irodai papír") és ELECTRONIC ("Elektronikus")
+ * megjelenési formát jelöl, nem termékáramot.
+ */
+function productStreamLabel(stream: string, t: TFn): string {
+    if (stream === 'PAPER') return t('productStreamPaper');
+    if (stream === 'ELECTRONIC') return t('productStreamElectronic');
+    return t(stream);
+}
+
+export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): string {
     const parts: string[] = [];
 
     // VAT exemption / out-of-scope reason, shown only when the same code
@@ -101,17 +113,20 @@ export function LineExtendedDetails({ line, t, ambiguousVatCodes }: Props): stri
         const pfc = line.productFeeClause;
         const items: string[] = [];
         if (pfc.productFeeTakeoverData) {
+            const reason = pfc.productFeeTakeoverData.takeoverReason;
+            const buyerBears = reason !== '01';
             items.push(<p><strong>{t('productFeeTakeoverData')}:</strong></p> as string);
-            items.push(<p>{t('takeoverReason')}: {t(pfc.productFeeTakeoverData.takeoverReason)}</p> as string);
+            items.push(<p>{t('feeObligor')}: {buyerBears ? t('feeObligorBuyer') : t('feeObligorSeller')}</p> as string);
+            items.push(<p>{t(`takeover_${reason}`)}</p> as string);
             if (pfc.productFeeTakeoverData.takeoverAmount) {
-                items.push(<p>{t('amount')}: {pfc.productFeeTakeoverData.takeoverAmount} HUF</p> as string);
+                items.push(<p>{t('amount')}: {nfTrimmed(pfc.productFeeTakeoverData.takeoverAmount, nf)}</p> as string);
             }
         }
         if (pfc.customerDeclaration) {
             items.push(<p><strong>{t('customerDeclaration')}:</strong></p> as string);
-            items.push(<p>{t('productStream')}: {t(pfc.customerDeclaration.productStream)}</p> as string);
+            items.push(<p>{t('productStream')}: {productStreamLabel(pfc.customerDeclaration.productStream, t)}</p> as string);
             if (pfc.customerDeclaration.productFeeWeight) {
-                items.push(<p>{t('weight')}: {pfc.customerDeclaration.productFeeWeight} kg</p> as string);
+                items.push(<p>{t('weight')}: {nfTrimmed(pfc.customerDeclaration.productFeeWeight, nf)} kg</p> as string);
             }
         }
         if (items.length > 0) {
@@ -183,7 +198,7 @@ export function LineExtendedDetails({ line, t, ambiguousVatCodes }: Props): stri
         parts.push(
             (<div class="detail-section">
                 <strong>{t('lineProductFeeContent')}:</strong>
-                <table class="summary-table">
+                <table class="summary-table fee-detail-table">
                     <thead>
                         <tr>
                             <th>{t('productFeeCode')}</th>
@@ -196,9 +211,9 @@ export function LineExtendedDetails({ line, t, ambiguousVatCodes }: Props): stri
                         {feeItems.map((fd: ProductFeeData) => (
                             <tr>
                                 <td>{esc(fd.productFeeCode?.productCodeValue || fd.productFeeCode?.productCodeOwnValue || '-')}</td>
-                                <td class="text-right">{fd.productFeeQuantity ?? '-'} {fd.productFeeMeasuringUnit ? t(fd.productFeeMeasuringUnit) : ''}</td>
-                                <td class="text-right">{fd.productFeeRate ?? '-'} HUF</td>
-                                <td class="text-right">{fd.productFeeAmount ?? '-'} HUF</td>
+                                <td class="text-right">{nfTrimmed(fd.productFeeQuantity, nf)} {fd.productFeeMeasuringUnit ? t(fd.productFeeMeasuringUnit) : ''}</td>
+                                <td class="text-right">{nfTrimmed(fd.productFeeRate, nf)}</td>
+                                <td class="text-right">{nfTrimmed(fd.productFeeAmount, nf)}</td>
                             </tr>
                         )).join('')}
                     </tbody>

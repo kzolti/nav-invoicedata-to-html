@@ -11,16 +11,19 @@ interface Props {
     formatTaxNumber: (tn: TaxNumberType) => string;
     getAddressLine1: (addr: AddressType | undefined) => string;
     getAddressFloor: (addr: AddressType | undefined, t: TFn) => string;
+    smallBusinessIndicator?: boolean;
     blocks?: DataEntry[];
 }
 
-export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor, blocks }: Props): string {
+export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, getAddressFloor, smallBusinessIndicator, blocks }: Props): string {
     const floorInfo = getAddressFloor(data.supplierAddress, t);
 
     return (
         <div class="party supplier">
             <h3>{t('supplier')}</h3>
             <p><strong>{esc(data.supplierName)}</strong></p>
+            {smallBusinessIndicator &&
+                <p><span class="tag">{t('smallBusiness')}</span></p>}
             <p>{t('taxNumber')}: {formatTaxNumber(data.supplierTaxNumber)}</p>
 
             {data.communityVatNumber &&

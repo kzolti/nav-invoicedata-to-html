@@ -18,6 +18,8 @@
   "scripts": {
     "test": "tsc && cp src/i18n/*.json dist/i18n/ && node dist/test-full.js && cp src/styles/*.css output/",
     "test:compact": "IDTOHTML_CSS=compact npm run test",
+    "test:en": "IDTOHTML_LOCALE=en npm run test",
+    "test:compact:en": "IDTOHTML_CSS=compact IDTOHTML_LOCALE=en npm run test",
     "build": "tsc && cp src/i18n/*.json dist/i18n/ && cp src/styles/*.css dist/ && rm -f dist/test-*.js dist/test-*.d.ts dist/test-*.d.ts.map",
     "prepublishOnly": "npm run build"
   },
@@ -58,10 +60,11 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@kitajs/html": "^4.2.13"
+    "@kitajs/html": "^4.2.13",
+    "n2words-anycurrency": "^6.1.2"
   },
-"peerDependencies": {
-     "nav-osa-core": "workspace:^",
-     "nav-osa-types": "workspace:^"
-   }
+  "peerDependencies": {
+    "nav-osa-core": "workspace:^",
+    "nav-osa-types": "workspace:^"
+  }
 }
