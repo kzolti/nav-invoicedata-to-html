@@ -602,10 +602,17 @@ body {
 }
 
 .total-line {
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--spacing-md);
     font-size: var(--font-size-large);
     margin-top: var(--spacing-md);
     font-weight: 600;
+}
+
+.total-line .total-amount {
+    text-align: right;
 }
 
 .total-words {

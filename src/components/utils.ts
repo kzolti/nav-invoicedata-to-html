@@ -220,6 +220,25 @@ export function nfTrimmed(val: number | string | null | undefined, nf: NFn): str
     return trimmed != null ? nf(trimmed, 0) : '-';
 }
 
+/**
+ * XSD-dátum (2021-05-15) megjelenítése lokalizáció szerint
+ * (hu: 2021. 05. 15., en: 05/15/2021). Nem dátumra változatlanul visszaadja.
+ */
+export function formatIsoDate(val: string | number | null | undefined, locale: string | undefined): string {
+    if (val == null || val === '') return '';
+    const s = String(val).trim();
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+    if (!m) return s;
+    const dt = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    if (Number.isNaN(dt.getTime())) return s;
+    return new Intl.DateTimeFormat(locale || 'hu', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(dt);
+}
+
 /** Nulla (vagy hiányzó) pénzösszeg? "0", "0.00", "", null → true. */
 export function isZeroAmount(val: number | string | null | undefined): boolean {
     if (val == null || val === '') return true;

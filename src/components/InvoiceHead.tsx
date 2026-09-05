@@ -46,6 +46,7 @@ export function InvoiceHeadComponent({
                 invoiceIssueDate,
                 completenessIndicator,
                 diffKeys,
+                locale,
                 ...ctx,
             })}
         </div>

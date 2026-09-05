@@ -21,9 +21,12 @@ export function PayableTotal({ data, decs, currency, locale, t, nf }: Props): st
     return (
         <div class="total-block">
             <p class="total-line">
-                <strong>{t('payable')}:</strong> {nf(data.invoiceGrossAmount, decs)} {shortCurrency(currency, locale)}
-                {showHuf &&
-                    (<><br /><small class="huf-sub">{nf(data.invoiceGrossAmountHUF, decs)} HUF</small></>)}
+                <strong>{t('payable')}:</strong>
+                <span class="total-amount">
+                    {nf(data.invoiceGrossAmount, decs)} {shortCurrency(currency, locale)}
+                    {showHuf &&
+                        (<><br /><small class="huf-sub">{nf(data.invoiceGrossAmountHUF, decs)} HUF</small></>)}
+                </span>
             </p>
             {words && <p class="total-words">{words}</p>}
         </div>

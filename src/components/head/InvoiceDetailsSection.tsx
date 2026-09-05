@@ -1,6 +1,6 @@
 import type { InvoiceDetail } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { esc, countDecimals } from '../utils.js';
+import { esc, countDecimals, formatIsoDate } from '../utils.js';
 
 interface Props {
     data: InvoiceDetail;
@@ -9,11 +9,12 @@ interface Props {
     completenessIndicator?: boolean;
     /** Batch-mezők, amelyek értéke a gyűjtő számlái között eltér (kiemelve). */
     diffKeys?: Set<string>;
+    locale: string;
     t: TFn;
     nf: NFn;
 }
 
-export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, completenessIndicator, diffKeys, t, nf }: Props): string {
+export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, completenessIndicator, diffKeys, locale, t, nf }: Props): string {
     const cls = (key: string): string => (diffKeys?.has(key) ? 'detail-item diff' : 'detail-item');
     return (
         <div class="invoice-details">
@@ -30,7 +31,7 @@ export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, c
                 {invoiceIssueDate && (
                     <div class="detail-item">
                         <strong>{t('invoiceIssueDate')}:</strong>
-                        {invoiceIssueDate}
+                        {formatIsoDate(invoiceIssueDate, locale)}
                     </div>
                 )}
                 <div class={cls('invoiceCategory')}>
@@ -39,18 +40,18 @@ export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, c
                 </div>
                 <div class={cls('invoiceDeliveryDate')}>
                     <strong>{t('invoiceDeliveryDate')}:</strong>
-                    {data.invoiceDeliveryDate}
+                    {formatIsoDate(data.invoiceDeliveryDate, locale)}
                 </div>
                 {data.invoiceDeliveryPeriodStart && (
                     <div class={cls('deliveryPeriod')}>
                         <strong>{t('deliveryPeriod')}:</strong>
-                        {data.invoiceDeliveryPeriodStart} - {data.invoiceDeliveryPeriodEnd}
+                        {formatIsoDate(data.invoiceDeliveryPeriodStart, locale)} - {formatIsoDate(data.invoiceDeliveryPeriodEnd, locale)}
                     </div>
                 )}
                 {data.invoiceAccountingDeliveryDate && (
                     <div class={cls('accountingDeliveryDate')}>
                         <strong>{t('accountingDeliveryDate')}:</strong>
-                        {data.invoiceAccountingDeliveryDate}
+                        {formatIsoDate(data.invoiceAccountingDeliveryDate, locale)}
                     </div>
                 )}
                 <div class={cls('currency')}>
@@ -72,7 +73,7 @@ export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, c
                 {data.paymentDate && (
                     <div class={cls('paymentDate')}>
                         <strong>{t('paymentDate')}:</strong>
-                        {data.paymentDate}
+                        {formatIsoDate(data.paymentDate, locale)}
                     </div>
                 )}
                 <div class={cls('appearance')}>
@@ -81,22 +82,24 @@ export function InvoiceDetailsSection({ data, invoiceNumber, invoiceIssueDate, c
                 </div>
             </div>
 
-            {/* Indicators */}
-            <div class="indicators">
-                {completenessIndicator && <span class="tag">{t('complete')}</span>}
-                {data.periodicalSettlement && <span class="tag">{t('periodicalSettlement')}</span>}
-                {data.cashAccountingIndicator && <span class="tag">{t('cashAccounting')}</span>}
-                {data.selfBillingIndicator && <span class="tag">{t('selfBilling')}</span>}
-                {data.utilitySettlementIndicator && <span class="tag">{t('utilitySettlement')}</span>}
-            </div>
+            {/* Indicators (csak ha van jelző, az üres doboz felesleges térközt adna) */}
+            {(completenessIndicator || data.periodicalSettlement || data.cashAccountingIndicator || data.selfBillingIndicator || data.utilitySettlementIndicator) && (
+                <div class="indicators">
+                    {completenessIndicator && <span class="tag">{t('complete')}</span>}
+                    {data.periodicalSettlement && <span class="tag">{t('periodicalSettlement')}</span>}
+                    {data.cashAccountingIndicator && <span class="tag">{t('cashAccounting')}</span>}
+                    {data.selfBillingIndicator && <span class="tag">{t('selfBilling')}</span>}
+                    {data.utilitySettlementIndicator && <span class="tag">{t('utilitySettlement')}</span>}
+                </div>
+            )}
 
             {/* Conventional Info */}
-            {data.conventionalInvoiceInfo && ConventionalInfo({ info: data.conventionalInvoiceInfo, t })}
+            {data.conventionalInvoiceInfo && ConventionalInfo({ info: data.conventionalInvoiceInfo, t, locale })}
         </div>
     ) as string;
 }
 
-function ConventionalInfo({ info, t }: { info: NonNullable<InvoiceDetail['conventionalInvoiceInfo']>; t: TFn }): string {
+function ConventionalInfo({ info, t, locale }: { info: NonNullable<InvoiceDetail['conventionalInvoiceInfo']>; t: TFn; locale: string }): string {
     const entries: Array<{ key: string; values: string[] }> = [
         { key: 'orderNumbers', values: info.orderNumbers?.orderNumber ?? [] },
         { key: 'deliveryNotes', values: info.deliveryNotes?.deliveryNote ?? [] },
@@ -120,7 +123,7 @@ function ConventionalInfo({ info, t }: { info: NonNullable<InvoiceDetail['conven
         .map(e => (
             <p>
                 <strong>{t(e.key)}:</strong>{' '}
-                {e.values.map(val => esc(val)).join(', ')}
+                {e.values.map(val => esc(e.key === 'shippingDates' ? formatIsoDate(val, locale) : val)).join(', ')}
             </p>
         ));
 

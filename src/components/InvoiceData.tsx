@@ -145,7 +145,7 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                             locale,
                         })}
 
-                        {invoice.invoiceLines && InvoiceLinesComponent({ data: invoice.invoiceLines, t, nf })}
+                        {invoice.invoiceLines && InvoiceLinesComponent({ data: invoice.invoiceLines, t, nf, locale })}
 
                         {invoice.invoiceSummary && InvoiceSummaryComponent({ invoice, t, nf, locale })}
 

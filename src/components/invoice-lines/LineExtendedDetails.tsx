@@ -1,11 +1,12 @@
 import type { TFn, NFn, DisplayLine } from '../utils.js';
 import type { ProductFeeData } from 'nav-osa-types';
-import { asArray, getAddressLine1, esc, vatCodeKey, nfTrimmed } from '../utils.js';
+import { asArray, getAddressLine1, esc, vatCodeKey, nfTrimmed, formatIsoDate } from '../utils.js';
 
 interface Props {
     line: DisplayLine;
     t: TFn;
     nf: NFn;
+    locale: string;
     ambiguousVatCodes: Set<string>;
 }
 
@@ -20,7 +21,7 @@ function productStreamLabel(stream: string, t: TFn): string {
     return t(stream);
 }
 
-export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): string {
+export function LineExtendedDetails({ line, t, nf, locale, ambiguousVatCodes }: Props): string {
     const parts: string[] = [];
 
     // VAT exemption / out-of-scope reason, shown only when the same code
@@ -50,7 +51,7 @@ export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): 
             annItems.push(`<strong>${t('originalInvoiceNumber')}:</strong> ${esc(line._annotatedOriginalInvoiceNumber)}`);
         }
         if (line._annotatedDeliveryDate) {
-            annItems.push(`<strong>${t('invoiceDeliveryDate')}:</strong> ${line._annotatedDeliveryDate}`);
+            annItems.push(`<strong>${t('invoiceDeliveryDate')}:</strong> ${formatIsoDate(line._annotatedDeliveryDate, locale)}`);
         }
         if (annItems.length > 0) {
             parts.push(`<div class="detail-section">${annItems.join(' | ')}</div>`);
@@ -63,7 +64,7 @@ export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): 
         parts.push(
             (<div class="detail-section">
                 <strong>{t('aggregateInvoiceLineData')}:</strong>
-                {agg.lineDeliveryDate && <p>{t('deliveryDate')}: {agg.lineDeliveryDate}</p>}
+                {agg.lineDeliveryDate && <p>{t('deliveryDate')}: {formatIsoDate(agg.lineDeliveryDate, locale)}</p>}
                 {agg.lineExchangeRate && <p>{t('exchangeRate')}: {agg.lineExchangeRate}</p>}
             </div>) as string
         );
@@ -90,7 +91,7 @@ export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): 
                 {adv.advanceIndicator && <p>{t('advancePayment')}: {t('yes')}</p>}
                 {adv.advancePaymentData && (<>
                     <p>{t('originalInvoice')}: {esc(adv.advancePaymentData.advanceOriginalInvoice)}</p>
-                    <p>{t('paymentDate')}: {adv.advancePaymentData.advancePaymentDate}</p>
+                    <p>{t('paymentDate')}: {formatIsoDate(adv.advancePaymentData.advancePaymentDate, locale)}</p>
                     {adv.advancePaymentData.advanceExchangeRate &&
                         <p>{t('exchangeRate')}: {adv.advancePaymentData.advanceExchangeRate}</p>}
                 </>)}
@@ -142,7 +143,7 @@ export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): 
         if (ntm.brand) items.push(<p>{t('brand')}: {esc(ntm.brand)}</p> as string);
         if (ntm.serialNum) items.push(<p>{t('serialNum')}: {esc(ntm.serialNum)}</p> as string);
         if (ntm.engineNum) items.push(<p>{t('engineNum')}: {esc(ntm.engineNum)}</p> as string);
-        if (ntm.firstEntryIntoService) items.push(<p>{t('firstEntryIntoService')}: {ntm.firstEntryIntoService}</p> as string);
+        if (ntm.firstEntryIntoService) items.push(<p>{t('firstEntryIntoService')}: {formatIsoDate(ntm.firstEntryIntoService, locale)}</p> as string);
         if (ntm.vehicle) {
             items.push(<p>{t('engineCapacity')}: {ntm.vehicle.engineCapacity} cm³</p> as string);
             items.push(<p>{t('enginePower')}: {ntm.vehicle.enginePower} kW</p> as string);
@@ -179,7 +180,7 @@ export function LineExtendedDetails({ line, t, nf, ambiguousVatCodes }: Props): 
             (<div class="detail-section">
                 <strong>{t('dieselOilPurchase')}:</strong>
                 <p>{t('purchaseLocation')}: {getAddressLine1(dop.purchaseLocation)}</p>
-                <p>{t('purchaseDate')}: {dop.purchaseDate}</p>
+                <p>{t('purchaseDate')}: {formatIsoDate(dop.purchaseDate, locale)}</p>
                 <p>{t('vehicleRegistrationNumber')}: {esc(dop.vehicleRegistrationNumber)}</p>
                 {dop.dieselOilQuantity != null &&
                     <p>{t('dieselOilQuantity')}: {dop.dieselOilQuantity} L</p>}

@@ -9,6 +9,7 @@ interface Props {
     data: Lines;
     t: TFn;
     nf: NFn;
+    locale: string;
 }
 
 // Check if line has any additional details to show
@@ -322,7 +323,7 @@ function computeColumnWidths(
     return floored.map(w => w.toFixed(1));
 }
 
-export function InvoiceLinesComponent({ data, t, nf }: Props): string {
+export function InvoiceLinesComponent({ data, t, nf, locale }: Props): string {
     const lines = asArray(data.line);
     const colDecs = computeColumnDecimals(lines);
     const hasDiscount = lines.some(line => !!line.lineDiscountData);
@@ -361,7 +362,7 @@ export function InvoiceLinesComponent({ data, t, nf }: Props): string {
                     </tr>
                 </thead>
 
-                {lines.map((line, idx) => renderLineGroup(line, idx, colDecs, totalCols, hasDiscount, t, nf, ambiguousVatCodes)).join('')}
+                {lines.map((line, idx) => renderLineGroup(line, idx, colDecs, totalCols, hasDiscount, t, nf, locale, ambiguousVatCodes)).join('')}
             </table>
         </div>
     ) as string;
@@ -383,7 +384,7 @@ function DiscountHeader({ t, supMain, supSub }: { t: TFn; supMain: string; supSu
     ) as string;
 }
 
-function renderLineGroup(line: DisplayLine, idx: number, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, hasDiscount: boolean, t: TFn, nf: NFn, ambiguousVatCodes: Set<string>): string {
+function renderLineGroup(line: DisplayLine, idx: number, colDecs: ReturnType<typeof computeColumnDecimals>, totalCols: number, hasDiscount: boolean, t: TFn, nf: NFn, locale: string, ambiguousVatCodes: Set<string>): string {
     // Páros/páratlan sáv: a sor és a hozzá tartozó detail-blokk azonos hátteret
     // kap (CSS-ben `.line-group-even` / `.line-group-odd` alapján színezhető).
     const stripeClass = idx % 2 === 1 ? 'line-group-odd' : 'line-group-even';
@@ -398,7 +399,7 @@ function renderLineGroup(line: DisplayLine, idx: number, colDecs: ReturnType<typ
                     <td colspan={String(totalCols - 1)}>
                         <div class="line-details">
                             {LineBasicDetails({ line, t })}
-                            {LineExtendedDetails({ line, t, nf, ambiguousVatCodes })}
+                            {LineExtendedDetails({ line, t, nf, locale, ambiguousVatCodes })}
                         </div>
                     </td>
                 </tr>

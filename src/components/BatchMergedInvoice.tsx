@@ -3,7 +3,7 @@ import type { TFn, NFn, DisplayLine } from './utils.js';
 import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
-import { asArray, esc, addDecimal } from './utils.js';
+import { asArray, esc, addDecimal, formatIsoDate } from './utils.js';
 import { splitSections, ExtraDataSection } from './sections.js';
 
 interface Props {
@@ -156,7 +156,7 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
                             <tr>
                                 <td>{esc(r.ref.originalInvoiceNumber)}</td>
                                 <td>{r.ref.modificationIndex}</td>
-                                <td>{r.deliveryDate}</td>
+                                <td>{formatIsoDate(r.deliveryDate, locale)}</td>
                             </tr>
                         )).join('')}
                     </tbody>
@@ -171,6 +171,7 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
                 data: mergedLines,
                 t,
                 nf,
+                locale,
             })}
 
             {/* Összevont összesítés */}

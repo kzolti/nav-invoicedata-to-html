@@ -1,6 +1,6 @@
 import type { ProductFeeSummary } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { asArray, esc, nfTrimmed } from '../utils.js';
+import { asArray, esc, nfTrimmed, formatIsoDate } from '../utils.js';
 import { amountInWords, shortCurrency } from './amountInWords.js';
 
 interface Props {
@@ -52,7 +52,8 @@ export function ProductFeeSummarySection({ items, t, nf, locale }: Props): strin
                     </table>
                     <div class="total-block">
                         <p class="total-line">
-                            <strong>{t('productChargeSum')}:</strong> {nfTrimmed(feeSummary.productChargeSum, nf)} {shortCurrency('HUF', locale)}
+                            <strong>{t('productChargeSum')}:</strong>
+                            <span class="total-amount">{nfTrimmed(feeSummary.productChargeSum, nf)} {shortCurrency('HUF', locale)}</span>
                         </p>
                         {words && <p class="total-words">{words}</p>}
                     </div>
@@ -60,7 +61,7 @@ export function ProductFeeSummarySection({ items, t, nf, locale }: Props): strin
                         <div class="detail-section">
                             <strong>{t('paymentEvidenceDocument')}:</strong>
                             <p>{t('evidenceDocumentNo')}: {esc(feeSummary.paymentEvidenceDocumentData.evidenceDocumentNo)}</p>
-                            <p>{t('evidenceDocumentDate')}: {feeSummary.paymentEvidenceDocumentData.evidenceDocumentDate}</p>
+                            <p>{t('evidenceDocumentDate')}: {formatIsoDate(feeSummary.paymentEvidenceDocumentData.evidenceDocumentDate, locale)}</p>
                             <p>{t('obligatedName')}: {esc(feeSummary.paymentEvidenceDocumentData.obligatedName)}</p>
                         </div>
                     )}
