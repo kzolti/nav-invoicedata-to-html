@@ -1,6 +1,6 @@
 import type { Lines, Line, VatRate } from 'nav-osa-types';
 import type { TFn, NFn, DisplayLine } from './utils.js';
-import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice, vatCodeKey } from './utils.js';
+import { asArray, countDecimals, getTargetDecimals, esc, calcDiscountedUnitPrice, vatCodeKey, nfTrimmed } from './utils.js';
 import { VatRateDisplay } from './VatRateDisplay.js';
 import { LineBasicDetails } from './invoice-lines/LineBasicDetails.js';
 import { LineExtendedDetails } from './invoice-lines/LineExtendedDetails.js';
@@ -122,12 +122,17 @@ export function ColumnLegend({ lines, t }: { lines: Line[]; t: TFn }): string {
     if (lines.length === 0) return '';
     const order = legendOrder(analyzeLineColumnUsage(lines));
     if (order.length === 0) return '';
+    // Bal oldalra az első fele (felfelé kerekítve): 5 tételnél 1–3 | 4–5.
+    const mid = Math.ceil(order.length / 2);
+    const col = (ids: LegendEntryId[]): string =>
+        ids.map(id => {
+            const e = legendText(id, t);
+            return `<p><sup>${order.indexOf(id) + 1}</sup> ${esc(e.abbr)} – ${esc(e.full)}</p>`;
+        }).join('');
     return (
         <div class="column-legend">
-            {order.map(id => {
-                const e = legendText(id, t);
-                return `<p><sup>${order.indexOf(id) + 1}</sup> ${esc(e.abbr)} – ${esc(e.full)}</p>`;
-            }).join('')}
+            <div class="column-legend-col">{col(order.slice(0, mid))}</div>
+            <div class="column-legend-col">{col(order.slice(mid))}</div>
         </div>
     ) as string;
 }
@@ -218,21 +223,21 @@ function computeColumnWidths(
     const amountCellLens = (line: DisplayLine): number[] => {
         const la = line.lineAmountsNormal;
         if (la) {
-            const hufLen = (v: string | number | undefined, base: string | number | undefined, decs: number): number =>
-                v && v !== base ? smallLineLen(`${nf(v, decs)}${HUF_SUFFIX}`) : 0;
+            const hufLen = (v: string | number | undefined, base: string | number | undefined): number =>
+                v && v !== base ? smallLineLen(`${nfTrimmed(v, nf)}${HUF_SUFFIX}`) : 0;
             return [
                 Math.max(
                     nf(la.lineNetAmountData?.lineNetAmount ?? '', colDecs.netAmount).length,
-                    hufLen(la.lineNetAmountData?.lineNetAmountHUF, la.lineNetAmountData?.lineNetAmount, colDecs.netAmount)
+                    hufLen(la.lineNetAmountData?.lineNetAmountHUF, la.lineNetAmountData?.lineNetAmount)
                 ),
                 Math.max(
                     la.lineVatData ? nf(la.lineVatData.lineVatAmount ?? '', colDecs.vatAmount).length : 1,
-                    la.lineVatData ? hufLen(la.lineVatData.lineVatAmountHUF, la.lineVatData.lineVatAmount, colDecs.vatAmount) : 0,
+                    la.lineVatData ? hufLen(la.lineVatData.lineVatAmountHUF, la.lineVatData.lineVatAmount) : 0,
                     vatLabelLen(line)
                 ),
                 Math.max(
                     nf(la.lineGrossAmountData?.lineGrossAmountNormal ?? '', colDecs.grossAmount).length,
-                    hufLen(la.lineGrossAmountData?.lineGrossAmountNormalHUF, la.lineGrossAmountData?.lineGrossAmountNormal, colDecs.grossAmount)
+                    hufLen(la.lineGrossAmountData?.lineGrossAmountNormalHUF, la.lineGrossAmountData?.lineGrossAmountNormal)
                 ),
             ];
         }
@@ -245,7 +250,7 @@ function computeColumnWidths(
                 Math.max(
                     nf(laS.lineGrossAmountSimplified, colDecs.grossAmount).length,
                     laS.lineGrossAmountSimplifiedHUF && laS.lineGrossAmountSimplifiedHUF !== laS.lineGrossAmountSimplified
-                        ? smallLineLen(`${nf(laS.lineGrossAmountSimplifiedHUF, colDecs.grossAmount)}${HUF_SUFFIX}`) : 0
+                        ? smallLineLen(`${nfTrimmed(laS.lineGrossAmountSimplifiedHUF, nf)}${HUF_SUFFIX}`) : 0
                 ),
             ];
         }
@@ -277,7 +282,7 @@ function computeColumnWidths(
             Math.max(
                 nf(line.unitPrice ?? '', colDecs.unitPrice).length,
                 line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice
-                    ? smallLineLen(`${nf(line.unitPriceHUF, colDecs.unitPrice)}${HUF_SUFFIX}`) : 0
+                    ? smallLineLen(`${nfTrimmed(line.unitPriceHUF, nf)}${HUF_SUFFIX}`) : 0
             ),
             ...(hasDiscount ? [discountCellLen(line)] : []),
             ...amountCellLens(line),
@@ -353,7 +358,7 @@ export function InvoiceLinesComponent({ data, t, nf, locale }: Props): string {
                         <th>#</th>
                         <th>{t('description')}</th>
                         <th class="text-right">{t('quantity')}{supNum(order, 'quantity')}</th>
-                        <th class="text-right">{t('unitOfMeasure')}{supNum(order, 'unit')}</th>
+                        <th class="text-left">{t('unitOfMeasure')}{supNum(order, 'unit')}</th>
                         <th class="text-right">{t('colUnitPrice')}{supNum(order, 'unitPrice')}</th>
                         {hasDiscount && DiscountHeader({ t, supMain: supNum(order, 'discountMain'), supSub: supNum(order, 'discountSub') })}
                         <th class="text-right">{t('colNet')}</th>
@@ -423,7 +428,7 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
                 {nf(line.quantity ?? '', colDecs.quantity)}
             </td>
 
-            <td class="text-right" style="white-space: nowrap;">
+            <td class="text-left" style="white-space: nowrap;">
                 {line.unitOfMeasure ? t(line.unitOfMeasure) : '-'}
                 {line.unitOfMeasureOwn && (<><br /><small>({esc(line.unitOfMeasureOwn)})</small></>)}
             </td>
@@ -431,7 +436,7 @@ function renderMainRow(line: DisplayLine, colDecs: ReturnType<typeof computeColu
             <td class="text-right" style="white-space: nowrap;">
                 {nf(line.unitPrice ?? '', colDecs.unitPrice) || '-'}
                 {line.unitPriceHUF && line.unitPriceHUF !== line.unitPrice &&
-                    (<><br /><small class="huf-sub">{nf(line.unitPriceHUF, colDecs.unitPrice)} HUF</small></>)}
+                    (<><br /><small class="huf-sub">{nfTrimmed(line.unitPriceHUF, nf)} HUF</small></>)}
             </td>
 
             {hasDiscount && (
@@ -463,20 +468,20 @@ function renderAmountCells(line: DisplayLine, colDecs: ReturnType<typeof compute
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineNetAmountData?.lineNetAmount ?? '', colDecs.netAmount) || '-'}
                 {la.lineNetAmountData?.lineNetAmountHUF && la.lineNetAmountData.lineNetAmountHUF !== la.lineNetAmountData.lineNetAmount &&
-                    (<><br /><small class="huf-sub">{nf(la.lineNetAmountData.lineNetAmountHUF, colDecs.netAmount)} HUF</small></>)}
+                    (<><br /><small class="huf-sub">{nfTrimmed(la.lineNetAmountData.lineNetAmountHUF, nf)} HUF</small></>)}
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {la.lineVatData ? (<>
                     {nf(la.lineVatData.lineVatAmount ?? '', colDecs.vatAmount) || '-'}
                     {la.lineVatData.lineVatAmountHUF && la.lineVatData.lineVatAmountHUF !== la.lineVatData.lineVatAmount &&
-                        (<><br /><small class="huf-sub">{nf(la.lineVatData.lineVatAmountHUF, colDecs.vatAmount)} HUF</small></>)}
+                        (<><br /><small class="huf-sub">{nfTrimmed(la.lineVatData.lineVatAmountHUF, nf)} HUF</small></>)}
                     <br /><small>{VatRateDisplay({ vatRate: la.lineVatRate, t, nf })}</small>
                 </>) : '-'}
             </td>
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineGrossAmountData?.lineGrossAmountNormal ?? '', colDecs.grossAmount) || '-'}
                 {la.lineGrossAmountData?.lineGrossAmountNormalHUF && la.lineGrossAmountData.lineGrossAmountNormalHUF !== la.lineGrossAmountData.lineGrossAmountNormal &&
-                    (<><br /><small class="huf-sub">{nf(la.lineGrossAmountData.lineGrossAmountNormalHUF, colDecs.grossAmount)} HUF</small></>)}
+                    (<><br /><small class="huf-sub">{nfTrimmed(la.lineGrossAmountData.lineGrossAmountNormalHUF, nf)} HUF</small></>)}
             </td>
         </>) as string;
     }
@@ -491,7 +496,7 @@ function renderAmountCells(line: DisplayLine, colDecs: ReturnType<typeof compute
             <td class="text-right" style="white-space: nowrap;">
                 {nf(la.lineGrossAmountSimplified, colDecs.grossAmount) || '-'}
                 {la.lineGrossAmountSimplifiedHUF && la.lineGrossAmountSimplifiedHUF !== la.lineGrossAmountSimplified &&
-                    (<><br /><small class="huf-sub">{nf(la.lineGrossAmountSimplifiedHUF, colDecs.grossAmount)} HUF</small></>)}
+                    (<><br /><small class="huf-sub">{nfTrimmed(la.lineGrossAmountSimplifiedHUF, nf)} HUF</small></>)}
             </td>
         </>) as string;
     }

@@ -1,5 +1,6 @@
 import type { SummarySimplified } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
+import { nfTrimmed } from '../utils.js';
 import { VatRateDisplay, VatRateReasonNote } from '../VatRateDisplay.js';
 
 interface Props {
@@ -28,7 +29,7 @@ export function SimplifiedSummary({ lines, decs, t, nf }: Props): string {
                                 {nf(item.vatContentGrossAmount, decs)}
                                 {item.vatContentGrossAmountHUF &&
                                     item.vatContentGrossAmountHUF !== item.vatContentGrossAmount &&
-                                    (<><br /><small class="huf-sub">{nf(item.vatContentGrossAmountHUF, decs)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(item.vatContentGrossAmountHUF, nf)} HUF</small></>)}
                             </td>
                         </tr>
                     )).join('')}

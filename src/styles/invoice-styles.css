@@ -333,6 +333,9 @@ body {
     padding-top: var(--spacing-sm);
     font-size: var(--font-size-small);
     color: var(--text-secondary);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--spacing-xl);
 }
 
 .column-legend p {
@@ -371,16 +374,6 @@ body {
     color: var(--text-primary);
     overflow-wrap: break-word;
     hyphens: auto;
-}
-
-.add-data-name {
-    font-size: var(--font-size-small);
-    color: var(--text-muted);
-    font-style: italic;
-    text-align: right;
-    white-space: nowrap;
-    /* Technical ID should not wrap */
-    flex-shrink: 0;
 }
 
 /* ============================================

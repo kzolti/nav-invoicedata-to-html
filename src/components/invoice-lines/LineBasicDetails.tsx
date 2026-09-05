@@ -68,7 +68,6 @@ export function LineBasicDetails({ line, t }: Props): string {
                                 <strong>{esc(item.dataDescription)}:</strong>
                                 <span class="add-data-value">{esc(item.dataValue)}</span>
                             </div>
-                            <div class="add-data-name">{esc(item.dataName)}</div>
                         </li>
                     )).join('')}
                 </ul>

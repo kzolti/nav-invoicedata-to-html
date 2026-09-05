@@ -279,4 +279,5 @@ body {
 .invoice-extra-data {
     margin-top: var(--spacing-md);
     padding-top: var(--spacing-sm);
+    border-top: none;
 }

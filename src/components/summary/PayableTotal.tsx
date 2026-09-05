@@ -1,5 +1,6 @@
 import type { SummaryGrossData } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
+import { nfTrimmed } from '../utils.js';
 import { amountInWords, shortCurrency } from './amountInWords.js';
 
 interface Props {
@@ -25,7 +26,7 @@ export function PayableTotal({ data, decs, currency, locale, t, nf }: Props): st
                 <span class="total-amount">
                     {nf(data.invoiceGrossAmount, decs)} {shortCurrency(currency, locale)}
                     {showHuf &&
-                        (<><br /><small class="huf-sub">{nf(data.invoiceGrossAmountHUF, decs)} HUF</small></>)}
+                        (<><br /><small class="huf-sub">{nfTrimmed(data.invoiceGrossAmountHUF, nf)} HUF</small></>)}
                 </span>
             </p>
             {words && <p class="total-words">{words}</p>}

@@ -1,6 +1,6 @@
 import type { SummaryByVatRate, SummaryNormal } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
-import { addDecimal, countDecimals, getTargetDecimals } from '../utils.js';
+import { addDecimal, countDecimals, getTargetDecimals, nfTrimmed } from '../utils.js';
 import { VatRateDisplay, VatRateReasonNote } from '../VatRateDisplay.js';
 
 interface TotalsProps {
@@ -53,20 +53,20 @@ export function VatBreakdownTable({ vatRateLines, vatDecs, totals, t, nf }: Prop
                                 {nf(item.vatRateNetData.vatRateNetAmount, vatDecs.net)}
                                 {item.vatRateNetData.vatRateNetAmountHUF &&
                                     item.vatRateNetData.vatRateNetAmountHUF !== item.vatRateNetData.vatRateNetAmount &&
-                                    (<><br /><small class="huf-sub">{nf(item.vatRateNetData.vatRateNetAmountHUF, vatDecs.net)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(item.vatRateNetData.vatRateNetAmountHUF, nf)} HUF</small></>)}
                             </td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {nf(item.vatRateVatData.vatRateVatAmount, vatDecs.vat)}
                                 {item.vatRateVatData.vatRateVatAmountHUF &&
                                     item.vatRateVatData.vatRateVatAmountHUF !== item.vatRateVatData.vatRateVatAmount &&
-                                    (<><br /><small class="huf-sub">{nf(item.vatRateVatData.vatRateVatAmountHUF, vatDecs.vat)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(item.vatRateVatData.vatRateVatAmountHUF, nf)} HUF</small></>)}
                             </td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {item.vatRateGrossData ? (<>
                                     {nf(item.vatRateGrossData.vatRateGrossAmount, vatDecs.gross)}
                                     {item.vatRateGrossData.vatRateGrossAmountHUF &&
                                         item.vatRateGrossData.vatRateGrossAmountHUF !== item.vatRateGrossData.vatRateGrossAmount &&
-                                        (<><br /><small class="huf-sub">{nf(item.vatRateGrossData.vatRateGrossAmountHUF, vatDecs.gross)} HUF</small></>)}
+                                        (<><br /><small class="huf-sub">{nfTrimmed(item.vatRateGrossData.vatRateGrossAmountHUF, nf)} HUF</small></>)}
                                 </>) : '-'}
                             </td>
                         </tr>
@@ -79,17 +79,17 @@ export function VatBreakdownTable({ vatRateLines, vatDecs, totals, t, nf }: Prop
                             <td class="text-right" style="white-space: nowrap;">
                                 {nf(totals.data.invoiceNetAmount, totals.netDecs)}
                                 {totals.data.invoiceNetAmountHUF && totals.data.invoiceNetAmountHUF !== totals.data.invoiceNetAmount &&
-                                    (<><br /><small class="huf-sub">{nf(totals.data.invoiceNetAmountHUF, totals.netDecs)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(totals.data.invoiceNetAmountHUF, nf)} HUF</small></>)}
                             </td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {nf(totals.data.invoiceVatAmount, totals.vatDecs)}
                                 {totals.data.invoiceVatAmountHUF && totals.data.invoiceVatAmountHUF !== totals.data.invoiceVatAmount &&
-                                    (<><br /><small class="huf-sub">{nf(totals.data.invoiceVatAmountHUF, totals.vatDecs)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(totals.data.invoiceVatAmountHUF, nf)} HUF</small></>)}
                             </td>
                             <td class="text-right" style="white-space: nowrap;">
                                 {gross != null && nf(gross, grossDecs)}
                                 {showGrossHuf && grossHuf != null &&
-                                    (<><br /><small class="huf-sub">{nf(grossHuf, grossDecs)} HUF</small></>)}
+                                    (<><br /><small class="huf-sub">{nfTrimmed(grossHuf, nf)} HUF</small></>)}
                             </td>
                         </tr>
                     </tfoot>

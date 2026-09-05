@@ -1,5 +1,6 @@
 import type { SummaryNormal } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
+import { nfTrimmed } from '../utils.js';
 
 interface Props {
     data: SummaryNormal;
@@ -17,7 +18,7 @@ export function NormalTotals({ data, decs, t, nf }: Props): string {
                     <td class="text-right" style="white-space: nowrap;">
                         {nf(data.invoiceNetAmount, decs.net)}
                         {data.invoiceNetAmountHUF && data.invoiceNetAmountHUF !== data.invoiceNetAmount &&
-                            (<><br /><small class="huf-sub">{nf(data.invoiceNetAmountHUF, decs.net)} HUF</small></>)}
+                            (<><br /><small class="huf-sub">{nfTrimmed(data.invoiceNetAmountHUF, nf)} HUF</small></>)}
                     </td>
                 </tr>
                 <tr>
@@ -25,7 +26,7 @@ export function NormalTotals({ data, decs, t, nf }: Props): string {
                     <td class="text-right" style="white-space: nowrap;">
                         {nf(data.invoiceVatAmount, decs.vat)}
                         {data.invoiceVatAmountHUF && data.invoiceVatAmountHUF !== data.invoiceVatAmount &&
-                            (<><br /><small class="huf-sub">{nf(data.invoiceVatAmountHUF, decs.vat)} HUF</small></>)}
+                            (<><br /><small class="huf-sub">{nfTrimmed(data.invoiceVatAmountHUF, nf)} HUF</small></>)}
                     </td>
                 </tr>
             </tbody>
