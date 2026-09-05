@@ -1,0 +1,233 @@
+/* invoice-compact theme (delta) — tömör, nyomtatásra optimalizált számlakép.
+ *
+ * HASZNÁLAT (XML, nyelvfüggetlen):
+ *   <additionalInvoiceData>
+ *     <dataName>I00000_IDTOHTMLDATA__CSS__COMPACT</dataName>
+ *     <dataDescription>CSS téma</dataDescription>
+ *     <dataValue>compact</dataValue>
+ *   </additionalInvoiceData>
+ *
+ * Ez a fájl DELTA: a generátor a base invoice-styles.css UTÁN fűzi be,
+ * így csak a felülírandó szabályokat kell tartalmaznia.
+ * Saját téma: másold ezt a fájlt `invoice-<id>.css` néven a styles-könyvtárba,
+ * és hivatkozd `I00000_IDTOHTMLDATA__CSS__<ID>` taggel (kisbetűsítve).
+ */
+
+:root {
+    --font-size-base: 8.5pt;
+    --font-size-small: 7.5pt;
+    --font-size-large: 10pt;
+    --font-size-xlarge: 13pt;
+    --line-height: 1.25;
+
+    --spacing-xs: 2px;
+    --spacing-sm: 3px;
+    --spacing-md: 6px;
+    --spacing-lg: 8px;
+    --spacing-xl: 12px;
+
+    --page-margin: 10mm;
+    --bg-invoice-header: #808080;
+}
+
+* {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+body {
+    background: #fff;
+    padding: 0;
+}
+
+.invoice-container {
+    box-shadow: none;
+    margin: 0;
+    padding: var(--page-margin);
+    min-height: auto;
+}
+
+.invoice-container h1 {
+    text-align: center;
+    letter-spacing: 0;
+    border-bottom: 2px solid #000;
+    margin-bottom: var(--spacing-md);
+}
+
+.invoice-container h2 {
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+}
+
+.invoice-container h3 {
+    margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+    border-bottom-width: 1px;
+}
+
+.invoice-container h4 {
+    margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+}
+
+/* Meta-csík egy sorban, gradiens nélkül */
+.invoice-metadata {
+    background: #fff;
+    color: var(--text-primary);
+    border: 1px solid #000;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.invoice-metadata p {
+    display: inline;
+    margin: 0 var(--spacing-lg) 0 0;
+}
+
+/* Fejléc: keretes kéthasábos doboz szürke címsávokkal */
+.invoice-head {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom-width: 1px;
+}
+
+.parties {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.party {
+    border-radius: 0;
+    border: 1px solid #000;
+    background: #fff;
+    padding: 0 0 var(--spacing-sm) 0;
+}
+
+.party.supplier,
+.party.customer,
+.party.fiscal-rep {
+    border-left: 1px solid #000;
+}
+
+.party + .party {
+    border-left: none;
+}
+
+.party h3 {
+    background: var(--bg-invoice-header);
+    color: #fff;
+    border-bottom: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.party p {
+    margin: var(--spacing-xs) 0;
+    padding: 0 var(--spacing-sm);
+}
+
+.party .address {
+    border-top: none;
+    margin-top: var(--spacing-xs);
+    padding-top: 0;
+}
+
+/* Részletek rács sűrítve */
+.details-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.detail-item {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 0;
+}
+
+.indicators {
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.tag,
+.badge {
+    border-radius: 0;
+    padding: 1px 5px;
+}
+
+/* Tételtábla sűrítve */
+.lines-table th,
+.lines-table td {
+    padding: 3px 4px;
+}
+
+.lines-table thead {
+    background: var(--bg-invoice-header);
+}
+
+.batch-header,
+.merged-warning,
+.invoice-reference {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-radius: 0;
+    border-left: 1px solid #000;
+}
+
+.line-details {
+    padding: var(--spacing-sm);
+}
+
+.invoice-lines {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Összesítés sűrítve */
+.invoice-summary {
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.summary-table th,
+.summary-table td,
+.totals-table th,
+.totals-table td {
+    padding: 4px 6px;
+}
+
+.summary-table,
+.totals-table {
+    margin-bottom: var(--spacing-md);
+}
+
+.totals-table {
+    width: 55%;
+}
+
+.total-row td {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-sm);
+}
+
+.vat-breakdown,
+.simplified-summary,
+.product-fee-summary {
+    margin-bottom: var(--spacing-md);
+}
+
+.fee-group {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: none;
+    border-left: none;
+}
+
+.invoice-section {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom-width: 1px;
+}
+
+.invoice-extra-data {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+}

@@ -373,6 +373,7 @@ body {
 .lines-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     margin-top: var(--spacing-md);
     font-size: var(--font-size-small);
 }
@@ -382,6 +383,7 @@ body {
     padding: var(--spacing-sm);
     border: 1px solid var(--border-color);
     text-align: left;
+    overflow-wrap: break-word;
 }
 
 .lines-table thead {
@@ -409,23 +411,54 @@ body {
     background: white;
 }
 
+.lines-table .main-row td:first-child {
+    vertical-align: middle;
+}
+
 .lines-table .main-row:hover {
     background: #f0f8ff;
 }
 
-.lines-table .details-row {
+/* Sávos (zebra) színezés: a sor és a hozzá tartozó detail-blokk azonos
+   hátteret kap, minden második sáv eltér (mindkét témában él). */
+.lines-table .line-group-odd .main-row,
+.lines-table .line-group-odd .details-row {
     background: var(--bg-secondary);
 }
 
+.lines-table .details-row td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
 .line-details {
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-small);
+}
+
+.line-details p {
+    margin: 2px 0;
+}
+
+.line-details .detail-section {
+    margin: 2px 0;
+}
+
+.line-details .product-codes ul,
+.line-details .additional-data ul {
+    margin: 2px 0;
+    padding-left: 20px;
+}
+
+.line-details .indicators {
+    margin-bottom: var(--spacing-xs);
 }
 
 .description {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .badge {

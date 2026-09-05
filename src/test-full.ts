@@ -5,6 +5,23 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Témafelülírás env-ből: IDTOHTML_CSS=compact -> src/styles/invoice-compact.css.
+// Alapból (üres) a default beágyazott stílus, ill. az XML-ben választott téma él.
+const themeId = (process.env.IDTOHTML_CSS ?? '').trim().toLowerCase();
+
+async function loadThemeCss(): Promise<string | undefined> {
+    if (!themeId || !/^[a-z0-9_-]{1,32}$/.test(themeId)) return undefined;
+    // A témafájl delta: a base stílus után fűzve (mint a generátorban).
+    try {
+        const base = await fs.readFile(path.resolve(__dirname, '../src/styles/invoice-styles.css'), 'utf-8');
+        const delta = await fs.readFile(path.resolve(__dirname, `../src/styles/invoice-${themeId}.css`), 'utf-8');
+        return `${base}\n${delta}`;
+    } catch {
+        console.warn(`Theme not found: invoice-${themeId}.css, falling back to default CSS.`);
+        return undefined;
+    }
+}
+
 async function main() {
     try {
         const examplesDir = path.resolve(__dirname, '../Peldaszamlak_v3.0');
@@ -21,10 +38,13 @@ async function main() {
         const xmlFiles = files.filter(file => file.endsWith('.xml'));
 
         console.log(`Found ${xmlFiles.length} XML files in ${examplesDir}`);
+        const themeCss = await loadThemeCss();
+        if (themeCss) console.log(`Using theme override: ${themeId}`);
 
         for (const file of xmlFiles) {
             const xmlPath = path.join(examplesDir, file);
-            const outputFilename = file.replace('.xml', '.html');
+            const base = file.replace('.xml', '');
+            const outputFilename = themeCss ? `${base}.${themeId}.html` : `${base}.html`;
             const outputPath = path.join(outputDir, outputFilename);
 
             console.log(`Processing ${file}...`);
@@ -35,7 +55,10 @@ async function main() {
                 // console.log(JSON.stringify(invoiceData.invoiceMain.invoice.invoiceHead.supplierInfo, null, 2));
 
                 const xmlContent = await fs.readFile(xmlPath, 'utf-8');
-                const html = await generateInvoiceHtml(xmlContent, { locale: 'hu' });
+                const html = await generateInvoiceHtml(xmlContent, {
+                    locale: 'hu',
+                    ...(themeCss ? { cssConfig: { inline: themeCss } } : {}),
+                });
                 await fs.writeFile(outputPath, html);
                 console.log(`Generated: ${outputFilename}`);
             } catch (err: unknown) {

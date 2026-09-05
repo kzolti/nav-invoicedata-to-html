@@ -92,6 +92,32 @@ const html = await generateInvoiceHtml(xmlData, {
 
 If neither is provided, the bundled stylesheet is embedded inline. The bundled stylesheet is also exported from the package (`nav-invoicedata-to-html/dist/invoice-styles.css`) if you want to reference it externally, e.g. as a starting point for your own customization.
 
+#### Theme selection from XML (contributor themes)
+
+The invoice XML itself can select a bundled theme (stylesheet) with a language-independent tag:
+
+```
+I00000_IDTOHTMLDATA__CSS__<ID>
+```
+
+Example (compact, print-optimized theme):
+
+```xml
+<additionalInvoiceData>
+  <dataName>I00000_IDTOHTMLDATA__CSS__COMPACT</dataName>
+  <dataDescription>CSS téma</dataDescription>
+  <dataValue>compact</dataValue>
+</additionalInvoiceData>
+```
+
+Rules:
+- `<ID>` is lowercased and must match `[a-z0-9_-]{1,32}`; it resolves to `invoice-<id>.css` in the styles directory (`compact` → `invoice-compact.css`, `default` → the bundled stylesheet). Unknown IDs silently fall back to the default stylesheet.
+- Precedence: explicit `cssConfig` (`inline`/`path`) **beats** the XML tag; the XML tag applies only when no `cssConfig` is given.
+- The tag never renders as visible invoice data.
+- Theme files are **deltas**: they are appended after the base `invoice-styles.css`, so they only need to contain overriding rules.
+
+To contribute your own theme: copy `src/styles/invoice-compact.css` to `src/styles/invoice-<id>.css`, adjust it, rebuild — the build copies every `src/styles/*.css` into `dist/`, and the XML tag above will pick it up.
+
 ### Additional data sections (AdditionalDataType)
 
 `additionalInvoiceData` entries addressed to the library (namespace prefix `I00000_IDTOHTMLDATA`) are rendered in dedicated sections based on their name, and can be provided per language:

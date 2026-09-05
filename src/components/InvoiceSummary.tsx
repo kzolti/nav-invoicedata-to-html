@@ -39,20 +39,20 @@ export function InvoiceSummaryComponent({ invoice, t, nf }: Props): string {
         <div class="invoice-summary">
             <h3>{t('summary')}</h3>
 
+            {invoice.productFeeSummary &&
+                ProductFeeSummarySection({ items: asArray(invoice.productFeeSummary), t, nf })}
+
+            {data.summarySimplified &&
+                SimplifiedSummary({ lines: simplifiedLines, decs: simplifiedDecs, t, nf })}
+
             {data.summaryNormal && (<>
                 {data.summaryNormal.summaryByVatRate &&
                     VatBreakdownTable({ vatRateLines, vatDecs, t, nf })}
                 {NormalTotals({ data: data.summaryNormal, decs: totalNormalDecs, t, nf })}
             </>)}
 
-            {data.summarySimplified &&
-                SimplifiedSummary({ lines: simplifiedLines, decs: simplifiedDecs, t, nf })}
-
             {data.summaryGrossData &&
                 GrossTotal({ data: data.summaryGrossData, decs: summaryGrossDecs, t, nf })}
-
-            {invoice.productFeeSummary &&
-                ProductFeeSummarySection({ items: asArray(invoice.productFeeSummary), t, nf })}
         </div>
     ) as string;
 }

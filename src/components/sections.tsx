@@ -7,8 +7,41 @@ import { asArray, esc } from './utils.js';
  * - NYELV: HU | ENG (a generátor locale-ja alapján választjuk ki a bejegyzést)
  * - SZEKCIO: DOCUMENT_NAME | DOCUMENT_DESC | SUPPLIER_BLOCK | CUSTOMER_BLOCK
  * - KEY: opcionális megkülönböztető
+ * Kivétel a nyelvfüggetlen CSS-választó: I00000_IDTOHTMLDATA__CSS__<ID>
+ * (lásd IDT_CSS_PREFIX / resolveCssId).
  */
 export const IDT_PREFIX = 'I00000_IDTOHTMLDATA';
+
+/**
+ * Nyelvfüggetlen CSS-választó tag (a stílus nem függ a megjelenítési nyelvtől,
+ * a feliratok úgyis az i18n szótárból jönnek):
+ * I00000_IDTOHTMLDATA__CSS__<ID>  (pl. I00000_IDTOHTMLDATA__CSS__COMPACT)
+ * Az <ID> egy `invoice-<id>.css` delta-fájlnak felel meg a styles-könyvtárban
+ * (a base invoice-styles.css után töltődik, csak felülírásokat tartalmaz).
+ */
+export const IDT_CSS_PREFIX = `${IDT_PREFIX}__CSS__`;
+
+/** Csak fájlnév-biztos azonosító fogadható el (path traversal kizárva). */
+const CSS_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+
+/** Érvényes CSS-azonosítót ad vissza, vagy null-t. */
+export function parseCssId(dataName: string): string | null {
+    if (!dataName.startsWith(IDT_CSS_PREFIX)) return null;
+    const id = dataName.slice(IDT_CSS_PREFIX.length).toLowerCase();
+    return CSS_ID_RE.test(id) ? id : null;
+}
+
+/**
+ * Az első érvényes CSS-választó azonosítója (több tag esetén az első nyer).
+ * Locale-független: hu és en alatt ugyanaz a tag él.
+ */
+export function resolveCssId(items: DataEntry[] | undefined): string | null {
+    for (const item of asArray(items)) {
+        const id = parseCssId(item.dataName);
+        if (id) return id;
+    }
+    return null;
+}
 
 export interface DataEntry {
     dataName: string;
@@ -61,6 +94,9 @@ export function splitSections(items: DataEntry[] | undefined, locale: string): S
     const lang = localeLang(locale);
 
     for (const item of asArray(items)) {
+        // CSS-választó tag: nem adat, soha nem jelenítjük meg (hibás
+        // azonosítóval sem szivároghat be a "további adatok" közé).
+        if (item.dataName.startsWith(IDT_CSS_PREFIX)) continue;
         const parsed = parseDataName(item.dataName);
         if (!parsed) {
             result.other.push(item);
