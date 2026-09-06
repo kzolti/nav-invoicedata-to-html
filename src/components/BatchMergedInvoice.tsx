@@ -4,7 +4,7 @@ import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
 import { asArray, esc, addDecimal, formatIsoDate } from './utils.js';
-import { splitSections, ExtraDataSection } from './sections.js';
+import { splitSections, ExtraDataSection, RendererInfoSection } from './sections.js';
 
 interface Props {
     batches: BatchInvoice[];
@@ -14,6 +14,10 @@ interface Props {
     t: TFn;
     nf: NFn;
     locale: string;
+    /** Fallback renderer-lábléc, ha az XML-ben nincs RENDERER_INFO tag. */
+    rendererFallback?: string;
+    /** Az XML-ből feloldott renderer-lánc (a hívó adja át). */
+    rendererValue?: string;
 }
 
 /**
@@ -101,11 +105,15 @@ function collectAnnotatedLines(batches: BatchInvoice[]): AnnotatedLine[] {
 /**
  * Összevont számlaképet renderel több batchInvoice-ból, ha azok alapvető adatai megegyeznek.
  */
-export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale }: Props): string {
+export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale, rendererFallback, rendererValue }: Props): string {
     const firstInvoice = batches[0].invoice;
 
     // Az egyéb (nem a könyvtárnak címzett) adatok összegyűjtése az összes batch-ből
     const extraItems = batches.flatMap(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).other);
+    // Renderer-lánc: explicit átadott érték, különben az első nem üres tag a batchekből.
+    const renderer = (rendererValue ?? '').trim() || batches
+        .map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).rendererInfo?.dataValue)
+        .find(v => v?.trim());
 
     // Felépítjük az annotált tétellistát
     const annotatedLines = collectAnnotatedLines(batches);
@@ -181,6 +189,8 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
             {ExtraDataSection({ items: extraItems, t })}
 
             {ColumnLegend({ lines: annotatedLines.map(al => al.line), t })}
+
+            {RendererInfoSection({ value: renderer, fallback: rendererFallback })}
         </div>
     ) as string;
 }

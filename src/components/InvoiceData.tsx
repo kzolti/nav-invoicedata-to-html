@@ -5,13 +5,15 @@ import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
 import { BatchMergedInvoiceComponent, canMergeBatches } from './BatchMergedInvoice.js';
 import { asArray, esc } from './utils.js';
-import { splitSections, ExtraDataSection } from './sections.js';
+import { splitSections, ExtraDataSection, RendererInfoSection } from './sections.js';
 
 interface Props {
     data: InvoiceDataType;
     t: TFn;
     nf: NFn;
     locale: string;
+    /** Fallback renderer-lábléc, ha az XML-ben nincs RENDERER_INFO tag. */
+    rendererFallback?: string;
 }
 
 const DETAIL_DIFF_KEYS = [
@@ -52,7 +54,7 @@ function computeDetailDiffKeys(invoices: Invoice[]): Set<string> {
     return out;
 }
 
-export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
+export function InvoiceDataComponent({ data, t, nf, locale, rendererFallback }: Props): string {
     let invoices: Invoice[] = [];
     let batchIndices: number[] = [];
 
@@ -63,9 +65,11 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
         if (canMergeBatches(batch)) {
             const firstSections = splitSections(batch[0].invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
             const title = firstSections.documentName?.dataValue ?? t('invoice');
+            const mergedRenderer = firstSections.rendererInfo?.dataValue
+                ?? batch.map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).rendererInfo?.dataValue).find(v => v?.trim());
             return (
                 <div class="invoice-container">
-                    <h1>{esc(title)}</h1>
+                    <h1 class="document-title">{esc(title)}</h1>
                     {firstSections.documentDesc && <p class="document-desc">{esc(firstSections.documentDesc.dataValue)}</p>}
 
                     {BatchMergedInvoiceComponent({
@@ -76,6 +80,8 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                         t,
                         nf,
                         locale,
+                        rendererFallback,
+                        rendererValue: mergedRenderer,
                     })}
                 </div>
             ) as string;
@@ -96,7 +102,7 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
 
     return (
         <div class="invoice-container">
-            <h1>{esc(title)}</h1>
+            <h1 class="document-title">{esc(title)}</h1>
             {docSections.documentDesc && <p class="document-desc">{esc(docSections.documentDesc.dataValue)}</p>}
 
             {detailDiffKeys.size > 0 && <p class="diff-note">{t('diffNote')}</p>}
@@ -152,6 +158,8 @@ export function InvoiceDataComponent({ data, t, nf, locale }: Props): string {
                         {ExtraDataSection({ items: sections.other, t })}
 
                         {invoice.invoiceLines && ColumnLegend({ lines: asArray(invoice.invoiceLines.line), t })}
+
+                        {RendererInfoSection({ value: sections.rendererInfo?.dataValue, fallback: rendererFallback })}
                     </div>
                 );
             }).join('')}

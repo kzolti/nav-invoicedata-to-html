@@ -16,6 +16,7 @@ export interface CssConfig {
 
 let defaultCssCache: string | null = null;
 const themeCssCache = new Map<string, string>();
+let packageVersionCache: string | null | undefined;
 
 /** Csak fájlnév-biztos témaazonosító (második védelmi vonal a sections.ts mellett). */
 const THEME_ID_RE = /^[a-z0-9_-]{1,32}$/;
@@ -58,6 +59,35 @@ function getThemeCss(id: string): string | null {
     }
 }
 
+/** A könyvtár saját verziója a package.json-ból (fallback renderer-lábléchez). */
+function getPackageVersion(): string | null {
+    if (packageVersionCache !== undefined) return packageVersionCache;
+    const candidates = [
+        path.resolve(getStylesDir(), '../package.json'),
+        path.resolve(getStylesDir(), '../../package.json'),
+        path.resolve(process.cwd(), 'package.json'),
+    ];
+    for (const p of candidates) {
+        try {
+            const raw = readFileSync(p, 'utf8');
+            const parsed = JSON.parse(raw) as { name?: string; version?: string };
+            if (parsed.name === 'nav-invoicedata-to-html' && parsed.version) {
+                packageVersionCache = parsed.version;
+                return packageVersionCache;
+            }
+        } catch {
+            // következő jelölt
+        }
+    }
+    packageVersionCache = null;
+    return null;
+}
+
+/** Fallback renderer-lábléc, ha az XML-ben nincs RENDERER_INFO tag. */
+function getRendererFallback(): string {
+    const v = getPackageVersion();
+    return v ? `nav-invoicedata-to-html@${v}` : 'nav-invoicedata-to-html';
+}
 /** Az első számla invoiceDetail.additionalInvoiceData elemeiből olvasott téma-ID. */
 function selectXmlThemeId(data: InvoiceData): string | null {
     const main = data.invoiceMain;
@@ -82,7 +112,8 @@ export class HtmlGenerator {
             data: data,
             t: (key: string) => this.i18n.t(key),
             nf: (val: number | string, decimals?: number) => this.i18n.nf(val, decimals),
-            locale: this.i18n.locale
+            locale: this.i18n.locale,
+            rendererFallback: getRendererFallback()
         });
 
         return this.wrapHtml(html, selectXmlThemeId(data));

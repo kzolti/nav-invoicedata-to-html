@@ -53,13 +53,9 @@
     --page-margin: 15mm;
 }
 
-/* ============================================
-   A4 PAGE SETUP
-   ============================================ */
-@page {
-    size: A4;
-    margin: 15mm;
-}
+/* A lapméretet és lapmargót NEM itt kezeljük: csak a hívó
+   (pl. Puppeteer page.pdf({ format, margin })) adja meg.
+   Ezért nincs @page szabály — az felülírná a hívó beállításait. */
 
 /* ============================================
    BASE STYLES
@@ -638,6 +634,18 @@ small {
     font-size: 8pt;
 }
 
+/* Renderer-lánc lábléc: a számla legutolsó sora, halvány kisbetűs. */
+.renderer-info {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+    font-size: var(--font-size-small);
+    color: var(--text-muted);
+    opacity: 0.7;
+    text-transform: lowercase;
+    word-break: break-all;
+}
+
 /* ============================================
    PRINT STYLES
    ============================================ */
@@ -675,6 +683,18 @@ small {
     /* Hide hover effects in print */
     .lines-table .main-row:hover {
         background: white;
+    }
+
+    /* A dokumentumcím printben rejtett: ilyenkor a hívó
+       Puppeteer-fejléce mutatja (displayHeaderFooter). */
+    .document-title {
+        display: none;
+    }
+
+    /* A renderer-lánc printben rejtett: a hívó a BEGIN/END
+       kommentblokk alapján emeli ki, és a Puppeteer-footerbe teszi. */
+    .renderer-info {
+        display: none;
     }
 }
 

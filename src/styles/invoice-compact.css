@@ -281,3 +281,32 @@ body {
     padding-top: var(--spacing-sm);
     border-top: none;
 }
+
+/* ============================================
+   PRINT: a képernyős belső paddingot nyomtatáskor
+   nullázzuk, hogy ne adódjon hozzá a Puppeteer
+   page.pdf({ margin }) lapmargójához.
+   (A compact delta a base UTÁN töltődik, ezért
+   a base @media print { padding: 0 } szabályát
+   a fenti screen-szabály felülütné e blokk nélkül.)
+   ============================================ */
+@media print {
+    body {
+        background: #fff;
+        padding: 0;
+    }
+
+    .invoice-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        min-height: auto;
+    }
+
+    /* A dokumentumcím printben rejtett: ilyenkor a hívó
+       Puppeteer-fejléce mutatja (displayHeaderFooter). */
+    .document-title {
+        display: none;
+    }
+}
