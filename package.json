@@ -28,6 +28,7 @@
     "test:compact": "IDTOHTML_CSS=compact npm run test",
     "test:en": "IDTOHTML_LOCALE=en npm run test",
     "test:compact:en": "IDTOHTML_CSS=compact IDTOHTML_LOCALE=en npm run test",
+    "test:langfree": "node scripts/inline-assets.mjs && tsc && node scripts/verify-langfree.mjs",
     "prepublishOnly": "npm run build:browser"
   },
   "keywords": [

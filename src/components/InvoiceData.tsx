@@ -61,12 +61,15 @@ export function InvoiceDataComponent({ data, t, nf, locale, rendererFallback }: 
     if (data.invoiceMain?.batchInvoice) {
         const batch = asArray(data.invoiceMain.batchInvoice);
 
-        // Ha a batchek összevonhatók, egyetlen számlaképet generálunk
+        // Ha a batchek összevonhatók, egyetlen számlaképet generálunk.
+        // Per-számla felbontás (tömb-szemantika!): azonos KEY eltérő
+        // értékkel több batch-ben is szerepelhet, ezért nincs közös szótár.
         if (canMergeBatches(batch)) {
-            const firstSections = splitSections(batch[0].invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale);
+            const perBatch = batch.map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale));
+            const firstSections = perBatch[0];
             const title = firstSections.documentName?.dataValue ?? t('invoice');
             const mergedRenderer = firstSections.rendererInfo?.dataValue
-                ?? batch.map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).rendererInfo?.dataValue).find(v => v?.trim());
+                ?? perBatch.map(s => s.rendererInfo?.dataValue).find(v => v?.trim());
             return (
                 <div class="invoice-container">
                     <h1 class="document-title">{esc(title)}</h1>
@@ -149,6 +152,7 @@ export function InvoiceDataComponent({ data, t, nf, locale, rendererFallback }: 
                             t,
                             nf,
                             locale,
+                            sections,
                         })}
 
                         {invoice.invoiceLines && InvoiceLinesComponent({ data: invoice.invoiceLines, t, nf, locale })}

@@ -156,6 +156,7 @@ I00000_IDTOHTMLDATA__<NYELV>__<SZEKCIO>[__KEY]
   - `SUPPLIER_BLOCK` — extra rows appended to the supplier block
   - `CUSTOMER_BLOCK` — extra rows appended to the customer block
 - `KEY` — optional suffix, allowing multiple entries in the same section
+- Language-independent form: if `NYELV` is omitted (`I00000_IDTOHTMLDATA__<SZEKCIO>[__KEY]`), the entry is `ALL` and renders under every locale. An unknown language tag counts as `ALL` too — data is never dropped silently; at worst it shows up in its section or under "Additional Data". If both a locale-specific and an `ALL` `DOCUMENT_NAME`/`DOCUMENT_DESC` exist, the locale-specific one wins.
 
 Example:
 
@@ -163,6 +164,7 @@ Example:
 <I00000_IDTOHTMLDATA__HU__DOCUMENT_NAME>Proforma számla</I00000_IDTOHTMLDATA__HU__DOCUMENT_NAME>
 <I00000_IDTOHTMLDATA__ENG__DOCUMENT_NAME>Proforma invoice</I00000_IDTOHTMLDATA__ENG__DOCUMENT_NAME>
 <I00000_IDTOHTMLDATA__HU__SUPPLIER_BLOCK__IBAN>HU12 3456 7890</I00000_IDTOHTMLDATA__HU__SUPPLIER_BLOCK__IBAN>
+<I00000_IDTOHTMLDATA__SUPPLIER_BLOCK__SWIFT>HUBHUHNB</I00000_IDTOHTMLDATA__SUPPLIER_BLOCK__SWIFT>
 ```
 
 All other (non-addressed) `additionalInvoiceData` entries are rendered in an "Additional Data" (További adatok) section at the end of the invoice.

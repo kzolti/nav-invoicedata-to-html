@@ -3,6 +3,7 @@ import type { AddressType, TaxNumberType } from 'nav-osa-types';
 import type { TFn, NFn } from '../utils.js';
 import { esc } from '../utils.js';
 import type { DataEntry } from '../sections.js';
+import { renderExtraRows } from '../sections.js';
 
 interface Props {
     data: SupplierInfo;
@@ -43,9 +44,7 @@ export function SupplierSection({ data, t, formatTaxNumber, getAddressLine1, get
             {data.exciseLicenceNum &&
                 <p>{t('exciseLicenceNum')}: {esc(data.exciseLicenceNum)}</p>}
 
-            {blocks?.map(block => (
-                <p><strong>{esc(block.dataDescription)}:</strong> {esc(block.dataValue)}</p>
-            )).join('')}
+            {blocks && renderExtraRows(blocks)}
         </div>
     ) as string;
 }

@@ -4,7 +4,7 @@ import { InvoiceHeadComponent } from './InvoiceHead.js';
 import { InvoiceLinesComponent, ColumnLegend } from './InvoiceLines.js';
 import { InvoiceSummaryComponent } from './InvoiceSummary.js';
 import { asArray, esc, addDecimal, formatIsoDate } from './utils.js';
-import { splitSections, ExtraDataSection, RendererInfoSection } from './sections.js';
+import { splitSections, ExtraDataSection, RendererInfoSection, type SectionedData } from './sections.js';
 
 interface Props {
     batches: BatchInvoice[];
@@ -108,11 +108,15 @@ function collectAnnotatedLines(batches: BatchInvoice[]): AnnotatedLine[] {
 export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale, rendererFallback, rendererValue }: Props): string {
     const firstInvoice = batches[0].invoice;
 
+    // Per-számla felbontás egyetlen bejárással (tömb-szemantika!):
+    // azonos KEY eltérő értékkel több batch-ben is szerepelhet, ezért
+    // az `other` tömböket összefűzzük, nem szótárba vonjuk össze.
+    const perBatch = batches.map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale));
     // Az egyéb (nem a könyvtárnak címzett) adatok összegyűjtése az összes batch-ből
-    const extraItems = batches.flatMap(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).other);
+    const extraItems = perBatch.flatMap(s => s.other);
     // Renderer-lánc: explicit átadott érték, különben az első nem üres tag a batchekből.
-    const renderer = (rendererValue ?? '').trim() || batches
-        .map(b => splitSections(b.invoice.invoiceHead?.invoiceDetail?.additionalInvoiceData, locale).rendererInfo?.dataValue)
+    const renderer = (rendererValue ?? '').trim() || perBatch
+        .map(s => s.rendererInfo?.dataValue)
         .find(v => v?.trim());
 
     // Felépítjük az annotált tétellistát
@@ -172,7 +176,7 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
             </div>
 
             {/* Fejléc az első batch-ből, de a teljesítési dátum módosítva */}
-            {renderMergedHead(firstInvoice, hasMultipleDeliveryDates, t, nf, locale, invoiceNumber, invoiceIssueDate, completenessIndicator)}
+            {renderMergedHead(firstInvoice, perBatch[0], hasMultipleDeliveryDates, t, nf, locale, invoiceNumber, invoiceIssueDate, completenessIndicator)}
 
             {/* Összevont tételek a per-line metaadatokkal */}
             {InvoiceLinesComponent({
@@ -200,6 +204,7 @@ export function BatchMergedInvoiceComponent({ batches, invoiceNumber, invoiceIss
  */
 function renderMergedHead(
     invoice: Invoice,
+    sections: SectionedData,
     hasMultipleDeliveryDates: boolean,
     t: TFn,
     nf: NFn,
@@ -209,7 +214,7 @@ function renderMergedHead(
     completenessIndicator?: boolean
 ): string {
     if (!hasMultipleDeliveryDates) {
-        return InvoiceHeadComponent({ data: invoice.invoiceHead, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale });
+        return InvoiceHeadComponent({ data: invoice.invoiceHead, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale, sections });
     }
 
     // Clone the invoiceDetail to override the delivery date display
@@ -221,7 +226,7 @@ function renderMergedHead(
         },
     };
 
-    return InvoiceHeadComponent({ data: modifiedHead, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale });
+    return InvoiceHeadComponent({ data: modifiedHead, invoiceNumber, invoiceIssueDate, completenessIndicator, t, nf, locale, sections });
 }
 
 /**

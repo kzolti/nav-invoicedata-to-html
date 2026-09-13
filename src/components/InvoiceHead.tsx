@@ -1,7 +1,7 @@
 import type { InvoiceHead } from 'nav-osa-types';
 import type { TFn, NFn } from './utils.js';
 import { formatTaxNumber, getAddressLine1, getAddressFloor } from './utils.js';
-import { splitSections } from './sections.js';
+import { splitSections, type SectionedData } from './sections.js';
 
 import { SupplierSection } from './head/SupplierSection.js';
 import { CustomerSection } from './head/CustomerSection.js';
@@ -17,6 +17,8 @@ interface Props {
     t: TFn;
     nf: NFn;
     locale: string;
+    /** Előre felbontott szekciók (1x / számla). Ha nincs megadva, helyben számoljuk. */
+    sections?: SectionedData;
 }
 
 export function InvoiceHeadComponent({
@@ -28,9 +30,10 @@ export function InvoiceHeadComponent({
     t,
     nf,
     locale,
+    sections: sectionsProp,
 }: Props): string {
     const ctx = { t, nf, formatTaxNumber, getAddressLine1, getAddressFloor };
-    const sections = splitSections(data.invoiceDetail?.additionalInvoiceData, locale);
+    const sections = sectionsProp ?? splitSections(data.invoiceDetail?.additionalInvoiceData, locale);
 
     return (
         <div class="invoice-head">

@@ -4,9 +4,13 @@ import { asArray, esc } from './utils.js';
 /**
  * A nav-invoicedata-to-html saját névterje az additionalInvoiceData adatokban.
  * Formátum: I00000_IDTOHTMLDATA__<NYELV>__<SZEKCIO>[__KEY]
- * - NYELV: HU | ENG (a generátor locale-ja alapján választjuk ki a bejegyzést)
+ * - NYELV: HU | ENG (a generátor locale-ja alapján választjuk ki a bejegyzést).
+ *   Ha hiányzik (az első tag nem nyelv, hanem szekció), a bejegyzés ALL:
+ *   minden locale alatt megjelenik. Ismeretlen nyelv-tag szintén ALL-nak
+ *   számít — adat soha nem vész el csendben, legfeljebb látható helyen
+ *   (dedikált szekció vagy „További adatok") jelenik meg.
  * - SZEKCIO: DOCUMENT_NAME | DOCUMENT_DESC | SUPPLIER_BLOCK | CUSTOMER_BLOCK
- * - KEY: opcionális megkülönböztető
+ * - KEY: opcionális megkülönböztető (első tagja ne legyen HU/ENG)
  * Kivétel a nyelvfüggetlen CSS-választó: I00000_IDTOHTMLDATA__CSS__<ID>
  * (lásd IDT_CSS_PREFIX / resolveCssId).
  */
@@ -58,20 +62,33 @@ export interface DataEntry {
 }
 
 export interface ParsedDataName {
-    lang: string;
+    /** Nyelvi tag (HU/ENG), vagy null = ALL (nyelvfüggetlen, minden locale alatt él). */
+    lang: string | null;
     section: string;
     key?: string;
 }
+
+/** A generátor által ismert nyelv-tagek. Ismeretlen/missing tag = ALL. */
+const KNOWN_LANGS = new Set(['HU', 'ENG']);
 
 export function parseDataName(dataName: string): ParsedDataName | null {
     const prefix = `${IDT_PREFIX}__`;
     if (!dataName.startsWith(prefix)) return null;
     const parts = dataName.slice(prefix.length).split('__');
-    const lang = parts[0];
+    const first = parts[0];
+    if (!first) return null;
+    // Nyelv-tag nélküli forma: az első tag a szekció -> ALL.
+    if (!KNOWN_LANGS.has(first.toUpperCase())) {
+        return {
+            lang: null,
+            section: first.toUpperCase(),
+            key: parts.length > 1 ? parts.slice(1).join('__') : undefined,
+        };
+    }
     const section = parts[1];
-    if (!lang || !section) return null;
+    if (!section) return null;
     return {
-        lang: lang.toUpperCase(),
+        lang: first.toUpperCase(),
         section: section.toUpperCase(),
         key: parts.length > 2 ? parts.slice(2).join('__') : undefined,
     };
@@ -97,10 +114,21 @@ export interface SectionedData {
 
 /**
  * A kapott additionalInvoiceData elemeket szekciókra bontja.
- * A saját névtérű, de más nyelvű elemek kimaradnak a kimenetből.
+ * Nyelvfüggetlen (ALL) elemek minden locale alatt megjelennek; valódi
+ * idegen nyelvűek kimaradnak. Ismeretlen kulcs az `other`-be kerül —
+ * adat soha nem vész el csendben.
+ * Per-számla tömb-szemantika: azonos KEY eltérő értékkel többször is
+ * szerepelhet (pl. batch-összevonásnál) — ezért nincs kulcs szerinti
+ * szótár, csak tömbök. Az eredmény tömb-referencia + locale szerint
+ * memoizálva van, így ugyanazt a számlát elég egyszer felbontani.
  */
-export function splitSections(items: DataEntry[] | undefined, locale: string): SectionedData {
+const sectionsCache = new WeakMap<object, Map<string, SectionedData>>();
+
+function splitSectionsUncached(items: DataEntry[] | undefined, locale: string): SectionedData {
     const result: SectionedData = { supplierBlock: [], customerBlock: [], other: [] };
+    // ALL cím-fallbackok: locale-specifikus nyer, független csak ha nincs olyan.
+    let fallbackName: DataEntry | undefined;
+    let fallbackDesc: DataEntry | undefined;
     const lang = localeLang(locale);
 
     for (const item of asArray(items)) {
@@ -118,13 +146,22 @@ export function splitSections(items: DataEntry[] | undefined, locale: string): S
             result.other.push(item);
             continue;
         }
-        if (parsed.lang !== lang) continue;
+        if (parsed.lang !== null && parsed.lang !== lang) continue;
+        const independent = parsed.lang === null;
         switch (parsed.section) {
             case 'DOCUMENT_NAME':
-                if (!result.documentName) result.documentName = item;
+                if (independent) {
+                    if (!fallbackName) fallbackName = item;
+                } else if (!result.documentName) {
+                    result.documentName = item;
+                }
                 break;
             case 'DOCUMENT_DESC':
-                if (!result.documentDesc) result.documentDesc = item;
+                if (independent) {
+                    if (!fallbackDesc) fallbackDesc = item;
+                } else if (!result.documentDesc) {
+                    result.documentDesc = item;
+                }
                 break;
             case 'SUPPLIER_BLOCK':
                 result.supplierBlock.push(item);
@@ -138,7 +175,38 @@ export function splitSections(items: DataEntry[] | undefined, locale: string): S
         }
     }
 
+    if (!result.documentName) result.documentName = fallbackName;
+    if (!result.documentDesc) result.documentDesc = fallbackDesc;
+
     return result;
+}
+
+/** Memoizált burkoló: azonos tömb + locale esetén ugyanazt adja vissza. */
+export function splitSections(items: DataEntry[] | undefined, locale: string): SectionedData {
+    if (!items) return splitSectionsUncached(items, locale);
+    const arr = asArray(items);
+    // asArray nem-tömb bemenetnél másol — azt nem cache-eljük.
+    if (arr !== (items as unknown)) return splitSectionsUncached(items, locale);
+    let byLocale = sectionsCache.get(arr);
+    if (!byLocale) {
+        byLocale = new Map<string, SectionedData>();
+        sectionsCache.set(arr, byLocale);
+    }
+    const cached = byLocale.get(locale);
+    if (cached) return cached;
+    const fresh = splitSectionsUncached(arr, locale);
+    byLocale.set(locale, fresh);
+    return fresh;
+}
+
+/**
+ * Szállító/vevő blokk extra sorai (`dataDescription: dataValue`).
+ * Közös helper, hogy a két party-szekció ne duplikálja a markupot.
+ */
+export function renderExtraRows(blocks: DataEntry[] | undefined): string {
+    return asArray(blocks).map(block => (
+        `<p><strong>${esc(block.dataDescription)}:</strong> ${esc(block.dataValue)}</p>`
+    )).join('');
 }
 
 /**
