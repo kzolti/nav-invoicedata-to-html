@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAV Számla Megjelenítő – Böngészős demó</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --radius: 8px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .badge {
+      background: #0284c7;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    select, button, input[type="file"] {
+      font-size: 0.85rem;
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    select:hover, button:hover {
+      border-color: var(--primary);
+    }
+    button.btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    button.btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      border: 1px dashed var(--border);
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .file-btn:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      position: relative;
+      background: #334155;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 12px;
+      background: var(--bg);
+    }
+    .placeholder svg {
+      width: 48px;
+      height: 48px;
+      opacity: 0.5;
+    }
+    /* Nyomtatás: csak a generált számlakép látszik, a demo-körítés nem.
+       Téma ilyenkor: ha az XML választott (CSS__<ID> tag), az érvényesül;
+       különben compact érkezik print-only <style>-ként az iframe-be
+       (lásd ensurePrintCompactStyle), így a képernyős nézet változatlan. */
+    @media print {
+      body {
+        display: block;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+      }
+      header,
+      .placeholder {
+        display: none !important;
+      }
+      main {
+        display: block;
+        background: #fff;
+      }
+      body:not(.has-invoice) main {
+        display: none;
+      }
+      #invoiceFrame {
+        display: block !important;
+        width: 100%;
+        border: none;
+        background: #fff;
+      }
+    }
+  </style>
+
+  <!--
+    CDN használat:
+    <script src="https://cdn.jsdelivr.net/npm/nav-invoicedata-to-html@latest/dist/browser/nav-invoice-to-html.min.js"></script>
+    vagy unpkg:
+    <script src="https://unpkg.com/nav-invoicedata-to-html@latest/dist/browser/nav-invoice-to-html.min.js"></script>
+  -->
+  <script src="../../dist/browser/nav-invoice-to-html.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>NAV InvoiceData → HTML</h1>
+      <span class="badge">Browser / CDN</span>
+    </div>
+
+    <div class="controls">
+      <!-- Nyelv választó select -->
+      <div class="control-group">
+        <label for="locale">Nyelv / Language:</label>
+        <select id="locale">
+          <option value="hu" selected>🇭🇺 Magyar</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+
+      <!-- Fájl feltöltés -->
+      <label class="file-btn" for="fileInput">
+        📁 <span>XML fájl megnyitása</span>
+      </label>
+      <input type="file" id="fileInput" accept=".xml,application/xml,text/xml">
+
+      <!-- Minta számla betöltése -->
+      <button id="loadSampleBtn" class="btn-primary" type="button">
+        ⚡ Mintaszámla betöltése
+      </button>
+
+      <!-- Nyomtatás: csak a számlakép (compact-tal, hacsak az XML nem választ témát) -->
+      <button id="printBtn" type="button">
+        🖨️ Nyomtatás
+      </button>
+    </div>
+  </header>
+
+  <main id="dropZone">
+    <div id="placeholder" class="placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+      </svg>
+      <p>Válassz ki egy NAV OSA XML számlafájlt, vagy kattints a "Mintaszámla betöltése" gombra!</p>
+    </div>
+    <iframe id="invoiceFrame" style="display: none;"></iframe>
+  </main>
+
+  <script>
+    let currentXml = null;
+    let hasInvoice = false;
+
+    const sampleXml = `<?xml version="1.0" encoding="UTF-8"?>
+<InvoiceData xmlns="http://schemas.nav.gov.hu/OSA/3.0/data"
+  xmlns:base="http://schemas.nav.gov.hu/OSA/3.0/base"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <invoiceNumber>DEMO-2026/001</invoiceNumber>
+  <invoiceIssueDate>2026-03-15</invoiceIssueDate>
+  <completenessIndicator>false</completenessIndicator>
+  <invoiceMain>
+    <invoice>
+      <invoiceHead>
+        <supplierInfo>
+          <supplierTaxNumber>
+            <base:taxpayerId>12345678</base:taxpayerId>
+            <base:vatCode>2</base:vatCode>
+            <base:countyCode>41</base:countyCode>
+          </supplierTaxNumber>
+          <supplierName>Példa Szolgáltató Kft.</supplierName>
+          <supplierAddress>
+            <base:detailedAddress>
+              <base:countryCode>HU</base:countryCode>
+              <base:postalCode>1055</base:postalCode>
+              <base:city>Budapest</base:city>
+              <base:streetName>Kossuth Lajos</base:streetName>
+              <base:publicPlaceCategory>tér</base:publicPlaceCategory>
+              <base:number>1</base:number>
+            </base:detailedAddress>
+          </supplierAddress>
+          <supplierBankAccountNumber>11700000-11112222-33334444</supplierBankAccountNumber>
+        </supplierInfo>
+        <customerInfo>
+          <customerVatStatus>DOMESTIC</customerVatStatus>
+          <customerVatData>
+            <customerTaxNumber>
+              <base:taxpayerId>87654321</base:taxpayerId>
+              <base:vatCode>2</base:vatCode>
+              <base:countyCode>42</base:countyCode>
+            </customerTaxNumber>
+          </customerVatData>
+          <customerName>Vevő Partner Zrt.</customerName>
+          <customerAddress>
+            <base:detailedAddress>
+              <base:countryCode>HU</base:countryCode>
+              <base:postalCode>4025</base:postalCode>
+              <base:city>Debrecen</base:city>
+              <base:streetName>Piac</base:streetName>
+              <base:publicPlaceCategory>utca</base:publicPlaceCategory>
+              <base:number>10</base:number>
+            </base:detailedAddress>
+          </customerAddress>
+        </customerInfo>
+        <invoiceDetail>
+          <invoiceCategory>NORMAL</invoiceCategory>
+          <invoiceDeliveryDate>2026-03-15</invoiceDeliveryDate>
+          <paymentDate>2026-03-30</paymentDate>
+          <paymentMethod>TRANSFER</paymentMethod>
+          <currencyCode>HUF</currencyCode>
+          <exchangeRate>1</exchangeRate>
+          <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+        </invoiceDetail>
+      </invoiceHead>
+      <invoiceLines>
+        <mergedItemIndicator>false</mergedItemIndicator>
+        <line>
+          <lineNumber>1</lineNumber>
+          <lineDescription>Webes számlanézegető komponens licenc</lineDescription>
+          <quantity>1</quantity>
+          <unitOfMeasure>PIECE</unitOfMeasure>
+          <unitPrice>150000</unitPrice>
+          <lineAmountsNormal>
+            <lineNetAmountData>
+              <lineNetAmount>150000</lineNetAmount>
+              <lineNetAmountHUF>150000</lineNetAmountHUF>
+            </lineNetAmountData>
+            <lineVatRate>
+              <vatPercentage>0.27</vatPercentage>
+            </lineVatRate>
+            <lineVatData>
+              <lineVatAmount>40500</lineVatAmount>
+              <lineVatAmountHUF>40500</lineVatAmountHUF>
+            </lineVatData>
+            <lineGrossAmountData>
+              <lineGrossAmountNormal>190500</lineGrossAmountNormal>
+              <lineGrossAmountNormalHUF>190500</lineGrossAmountNormalHUF>
+            </lineGrossAmountData>
+          </lineAmountsNormal>
+        </line>
+      </invoiceLines>
+      <invoiceSummary>
+        <summaryNormal>
+          <summaryByVatRate>
+            <vatRate>
+              <vatPercentage>0.27</vatPercentage>
+            </vatRate>
+            <vatRateNetData>
+              <vatRateNetAmount>150000</vatRateNetAmount>
+              <vatRateNetAmountHUF>150000</vatRateNetAmountHUF>
+            </vatRateNetData>
+            <vatRateVatData>
+              <vatRateVatAmount>40500</vatRateVatAmount>
+              <vatRateVatAmountHUF>40500</vatRateVatAmountHUF>
+            </vatRateVatData>
+            <vatRateGrossData>
+              <vatRateGrossAmount>190500</vatRateGrossAmount>
+              <vatRateGrossAmountHUF>190500</vatRateGrossAmountHUF>
+            </vatRateGrossData>
+          </summaryByVatRate>
+          <invoiceNetAmount>150000</invoiceNetAmount>
+          <invoiceNetAmountHUF>150000</invoiceNetAmountHUF>
+          <invoiceVatAmount>40500</invoiceVatAmount>
+          <invoiceVatAmountHUF>40500</invoiceVatAmountHUF>
+        </summaryNormal>
+        <summaryGrossData>
+          <invoiceGrossAmount>190500</invoiceGrossAmount>
+          <invoiceGrossAmountHUF>190500</invoiceGrossAmountHUF>
+        </summaryGrossData>
+      </invoiceSummary>
+    </invoice>
+  </invoiceMain>
+</InvoiceData>`;
+
+    async function renderInvoice() {
+      if (!currentXml) return;
+      const locale = document.getElementById('locale').value;
+      try {
+        const html = await NavInvoiceToHtml.generateInvoiceHtml(currentXml, { locale });
+        const frame = document.getElementById('invoiceFrame');
+        const placeholder = document.getElementById('placeholder');
+        hasInvoice = false;
+        document.body.classList.remove('has-invoice');
+        frame.style.height = '';
+        placeholder.style.display = 'none';
+        frame.style.display = 'block';
+        frame.srcdoc = html;
+      } catch (err) {
+        alert('Hiba a számla generálásakor: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    function getCompactCss() {
+      try {
+        const themes = NavInvoiceToHtml.THEME_CSS;
+        if (themes && typeof themes['compact'] === 'string') return themes['compact'];
+      } catch (err) {
+        console.warn('Compact CSS nem érhető el:', err);
+      }
+      return '';
+    }
+
+    // Az XML saját CSS-témát választott? (első érvényes
+    // I00000_IDTOHTMLDATA__CSS__<ID> tag a dataName elemekben.)
+    // Ilyenkor nyomtatásban is az érvényesül, compactot nem erőltetünk.
+    // Ismeretlen ID-re a generátor defaultra esik vissza, oda viszont
+    // mehet a compact (nincs érvényesíthető XML-választás).
+    function resolveXmlThemeId(xml) {
+      const m = String(xml).match(/<dataName>\s*I00000_IDTOHTMLDATA__CSS__([A-Za-z0-9_-]{1,32})\s*<\/dataName>/);
+      if (!m) return null;
+      const id = m[1].toLowerCase();
+      if (!/^[a-z0-9_-]{1,32}$/.test(id)) return null;
+      if (id === 'default') return id;
+      try {
+        const themes = NavInvoiceToHtml.THEME_CSS || {};
+        if (typeof themes[id] === 'string') return id;
+      } catch (err) {
+        /* THEME_CSS nem érhető el: nincs feloldható téma */
+      }
+      return null;
+    }
+
+    // Compact delta befecskendezése az iframe dokumentumba, print-only
+    // <style media="print">-ként. Csak akkor, ha az XML nem választott
+    // saját témát (akkor a generátor kimenete érvényesül változtatás
+    // nélkül). A képernyős nézetet sosem bántjuk.
+    // Szinkron DOM-művelet, nincs iframe-újratöltés, ezért nincs
+    // versenyhelyzet a nyomtatási előnézettel (ellentétben srcdoc-cserével).
+    function ensurePrintCompactStyle() {
+      const frame = document.getElementById('invoiceFrame');
+      let doc = null;
+      try {
+        doc = frame.contentDocument;
+      } catch (err) {
+        return;
+      }
+      if (!doc || !doc.head || doc.getElementById('demo-print-compact')) return;
+      if (resolveXmlThemeId(currentXml)) return;
+      const css = getCompactCss();
+      if (!css) return;
+      const el = doc.createElement('style');
+      el.id = 'demo-print-compact';
+      el.setAttribute('media', 'print');
+      el.textContent = css;
+      doc.head.appendChild(el);
+    }
+
+    // Nyomtatáshoz az iframe-et a teljes tartalmi magasságára nyitjuk,
+    // különben a képernyős (nézetablaknyi) magasságnál elvágódna a papír.
+    function expandFrameForPrint() {
+      const frame = document.getElementById('invoiceFrame');
+      try {
+        const doc = frame.contentDocument;
+        if (!doc || !doc.documentElement) return;
+        if (!('screenHeight' in frame.dataset)) {
+          frame.dataset.screenHeight = frame.style.height || '';
+        }
+        frame.style.height = doc.documentElement.scrollHeight + 'px';
+      } catch (err) {
+        /* cross-origin: nem tudjuk méretezni, a CSS így is rejti a körítést */
+      }
+    }
+
+    function restoreFrameHeight() {
+      const frame = document.getElementById('invoiceFrame');
+      if ('screenHeight' in frame.dataset) {
+        frame.style.height = frame.dataset.screenHeight;
+        delete frame.dataset.screenHeight;
+      }
+    }
+
+    function printInvoice() {
+      if (!hasInvoice) {
+        alert('Nincs betöltött számla. Nyiss meg egy XML fájlt vagy töltsd be a mintaszámlát!');
+        return;
+      }
+      ensurePrintCompactStyle();
+      expandFrameForPrint();
+      const frame = document.getElementById('invoiceFrame');
+      try {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      } catch (err) {
+        // Fallback: szülőoldali nyomtatás (a @media print CSS így is
+        // csak az iframe-et mutatja).
+        window.print();
+      }
+    }
+
+    // Iframe betöltődött: compact print-stílus előkészítése + jelzés,
+    // hogy van nyomtatható tartalom. Az afterprint az iframe ablakán
+    // azért kell, mert contentWindow.print() esetén a szülőablak
+    // afterprint eseménye nem feltétlenül tüzel.
+    document.getElementById('invoiceFrame').addEventListener('load', () => {
+      if (!currentXml) return;
+      hasInvoice = true;
+      document.body.classList.add('has-invoice');
+      ensurePrintCompactStyle();
+      try {
+        const win = document.getElementById('invoiceFrame').contentWindow;
+        if (win) win.addEventListener('afterprint', restoreFrameHeight);
+      } catch (err) {
+        /* cross-origin: nincs afterprint-visszaállítás */
+      }
+    });
+
+    // Ctrl+P / menüs nyomtatás a szülőoldalon: ugyanaz az előkészítés.
+    window.addEventListener('beforeprint', () => {
+      if (!hasInvoice) return;
+      ensurePrintCompactStyle();
+      expandFrameForPrint();
+    });
+    window.addEventListener('afterprint', restoreFrameHeight);
+
+    document.getElementById('printBtn').addEventListener('click', printInvoice);
+
+    document.getElementById('locale').addEventListener('change', renderInvoice);
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentXml = await file.text();
+      renderInvoice();
+    });
+
+    document.getElementById('loadSampleBtn').addEventListener('click', () => {
+      currentXml = sampleXml;
+      renderInvoice();
+    });
+
+    // Drag & Drop
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', (e) => e.preventDefault());
+    dropZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.xml') || file.type.includes('xml'))) {
+        currentXml = await file.text();
+        renderInvoice();
+      }
+    });
+  </script>
+</body>
+</html>

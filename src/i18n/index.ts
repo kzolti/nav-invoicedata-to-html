@@ -1,9 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { TRANSLATIONS } from './translations.js';
 import { toDecimalString } from '../components/utils.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class I18n {
     private translations: Record<string, string> = {};
@@ -20,12 +16,11 @@ export class I18n {
     }
 
     private loadTranslations() {
-        // Translation files are next to this file in both src/ and dist/
-        const filePath = path.resolve(__dirname, `./${this.locale}.json`);
-        if (fs.existsSync(filePath)) {
-            this.translations = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const found = TRANSLATIONS[this.locale];
+        if (found) {
+            this.translations = found;
         } else {
-            console.warn(`Translation file not found: ${filePath}`);
+            console.warn(`Translation not available for locale: ${this.locale}`);
         }
     }
 

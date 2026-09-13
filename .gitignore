@@ -17,3 +17,7 @@ yarn.lock
 pnpm-lock.yaml
 bun.lockb
 bun.lock
+
+# Build-time generated files (scripts/inline-assets.mjs)
+src/styles/cssInlined.ts
+src/i18n/translations.ts

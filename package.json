@@ -10,18 +10,25 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./browser": {
+      "types": "./dist/browser-entry.d.ts",
+      "import": "./dist/browser-entry.js",
+      "default": "./dist/browser-entry.js"
+    },
     "./dist/invoice-styles.css": "./dist/invoice-styles.css"
   },
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "test": "tsc && cp src/i18n/*.json dist/i18n/ && node dist/test-full.js && cp src/styles/*.css output/",
+    "inline-assets": "node scripts/inline-assets.mjs",
+    "build": "node scripts/inline-assets.mjs && tsc && cp src/styles/*.css dist/ && rm -f dist/test-*.js dist/test-*.d.ts dist/test-*.d.ts.map",
+    "build:browser": "npm run build && node scripts/bundle-browser.mjs",
+    "test": "node scripts/inline-assets.mjs && tsc && cp src/i18n/*.json dist/i18n/ && node dist/test-full.js && cp src/styles/*.css output/",
     "test:compact": "IDTOHTML_CSS=compact npm run test",
     "test:en": "IDTOHTML_LOCALE=en npm run test",
     "test:compact:en": "IDTOHTML_CSS=compact IDTOHTML_LOCALE=en npm run test",
-    "build": "tsc && cp src/i18n/*.json dist/i18n/ && cp src/styles/*.css dist/ && rm -f dist/test-*.js dist/test-*.d.ts dist/test-*.d.ts.map",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build:browser"
   },
   "keywords": [
     "nav",
@@ -57,6 +64,7 @@
   ],
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "esbuild": "^0.25.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
