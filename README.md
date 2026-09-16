@@ -86,6 +86,17 @@ const html = await generateInvoiceHtml(xmlData, {
 const html = await generateInvoiceHtml(xmlData, { validate: false });
 ```
 
+### Already-parsed `InvoiceData` (no XML)
+
+If you already have the parsed object (e.g. from an API response or `xmlParserFxp`), skip parsing entirely — works in Node.js and in the browser build alike:
+
+```typescript
+import { generateInvoiceHtmlFromData } from 'nav-invoicedata-to-html';
+// or: import { generateInvoiceHtmlFromData } from 'nav-invoicedata-to-html/browser';
+
+const html = await generateInvoiceHtmlFromData(invoiceData, { locale: 'hu' });
+```
+
 ### CSS Configuration
 
 By default, the generated HTML embeds the bundled `invoice-styles.css` inline as a `<style>` tag, so no external file is required. You can customize this via `cssConfig`:
@@ -117,17 +128,17 @@ If neither is provided, the bundled stylesheet is embedded inline. The bundled s
 
 #### Theme selection from XML (contributor themes)
 
-The invoice XML itself can select a bundled theme (stylesheet) with a language-independent tag:
+The invoice XML itself can select a bundled theme (stylesheet) with a control tag from the `I90000_IDTOHTMLDATA` namespace (never rendered, only a builder signal — deliberately outside the `I00000…` data namespace so it can't be mistaken for a language-tagged entry):
 
 ```
-I00000_IDTOHTMLDATA__CSS__<ID>
+I90000_IDTOHTMLDATA__CSS__<ID>
 ```
 
 Example (compact, print-optimized theme):
 
 ```xml
 <additionalInvoiceData>
-  <dataName>I00000_IDTOHTMLDATA__CSS__COMPACT</dataName>
+  <dataName>I90000_IDTOHTMLDATA__CSS__COMPACT</dataName>
   <dataDescription>CSS téma</dataDescription>
   <dataValue>compact</dataValue>
 </additionalInvoiceData>

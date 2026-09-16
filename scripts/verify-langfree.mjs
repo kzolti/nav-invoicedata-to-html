@@ -69,14 +69,22 @@ const localized = [entry('I00000_IDTOHTMLDATA__HU__FOO', 'z')];
 check('HU unknown-section visible under hu', splitSections(localized, 'hu').other.length, 1);
 check('HU unknown-section hidden under en', splitSections(localized, 'en').other.length, 0);
 
-// --- CSS / RENDERER_INFO változatlan ---
+// --- CSS / RENDERER_INFO az I90000 vezérlő-névtérben ---
+import { parseCssId, resolveCssId } from '../dist/components/sections.js';
 const special = [
-    entry('I00000_IDTOHTMLDATA__CSS__COMPACT', 'compact'),
-    { dataName: 'I00000_IDTOHTMLDATA__RENDERER_INFO', dataDescription: 'r', dataValue: 'lib@1' },
+    entry('I90000_IDTOHTMLDATA__CSS__COMPACT', 'compact'),
+    { dataName: 'I90000_IDTOHTMLDATA__RENDERER_INFO', dataDescription: 'r', dataValue: 'lib@1' },
 ];
 const sh = splitSections(special, 'hu');
 check('CSS tag never leaks into other', sh.other.length, 0);
 check('RENDERER_INFO routed to footer', sh.rendererInfo?.dataValue, 'lib@1');
+check('resolveCssId reads I90000 tag', resolveCssId(special), 'compact');
+check('parseCssId lowercases id', parseCssId('I90000_IDTOHTMLDATA__CSS__COMPACT'), 'compact');
+check('parseCssId rejects I00000 prefix', parseCssId('I00000_IDTOHTMLDATA__CSS__COMPACT'), null);
+// Régi I00000-es control-tag többé nem vezérlőjel: közönséges adatként látszik.
+const legacy = [entry('I00000_IDTOHTMLDATA__CSS__COMPACT', 'compact')];
+check('legacy I00000 CSS tag renders as data', splitSections(legacy, 'hu').other.length, 1);
+check('legacy tag not resolved as theme', resolveCssId(legacy), null);
 
 if (failures > 0) {
     console.error(`\n${failures} check(s) FAILED`);

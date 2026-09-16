@@ -11,7 +11,7 @@
  * Téma-konvenció (lásd README "Theme selection from XML"):
  *   - `invoice-styles.css` a base stílus (mindig beágyazva).
  *   - `invoice-<id>.css` fájlok a témák (delták: a base UTÁN fűzve).
- *   - Az XML-tag `I00000_IDTOHTMLDATA__CSS__<ID>` az <ID>-t kisbetűsítve
+ *   - Az XML-tag `I90000_IDTOHTMLDATA__CSS__<ID>` az <ID>-t kisbetűsítve
  *     oldja fel. Új téma = új `invoice-<id>.css` fájl, rebuild után
  *     automatikusan elérhető (nincs kézi regisztráció).
  */

@@ -2,7 +2,7 @@
  *
  * HASZNÁLAT (XML, nyelvfüggetlen):
  *   <additionalInvoiceData>
- *     <dataName>I00000_IDTOHTMLDATA__CSS__COMPACT</dataName>
+ *   <dataName>I90000_IDTOHTMLDATA__CSS__COMPACT</dataName>
  *     <dataDescription>CSS téma</dataDescription>
  *     <dataValue>compact</dataValue>
  *   </additionalInvoiceData>
@@ -10,7 +10,7 @@
  * Ez a fájl DELTA: a generátor a base invoice-styles.css UTÁN fűzi be,
  * így csak a felülírandó szabályokat kell tartalmaznia.
  * Saját téma: másold ezt a fájlt `invoice-<id>.css` néven a styles-könyvtárba,
- * és hivatkozd `I00000_IDTOHTMLDATA__CSS__<ID>` taggel (kisbetűsítve).
+ * és hivatkozd `I90000_IDTOHTMLDATA__CSS__<ID>` taggel (kisbetűsítve).
  */
 
 :root {

@@ -11,27 +11,39 @@ import { asArray, esc } from './utils.js';
  *   (dedikált szekció vagy „További adatok") jelenik meg.
  * - SZEKCIO: DOCUMENT_NAME | DOCUMENT_DESC | SUPPLIER_BLOCK | CUSTOMER_BLOCK
  * - KEY: opcionális megkülönböztető (első tagja ne legyen HU/ENG)
- * Kivétel a nyelvfüggetlen CSS-választó: I00000_IDTOHTMLDATA__CSS__<ID>
- * (lásd IDT_CSS_PREFIX / resolveCssId).
+ *
+ * A buildernek szóló, meg nem jelenítendő vezérlőjelek külön névtérben
+ * élnek, hogy alakilag se legyenek összetéveszthetők nyelvi bejegyzéssel:
+ * I90000_IDTOHTMLDATA__... (lásd IDT_CONTROL_PREFIX).
  */
 export const IDT_PREFIX = 'I00000_IDTOHTMLDATA';
 
 /**
+ * Vezérlő-névtér: a buildernek szóló, soha meg nem jelenített tagek.
+ * Szándékosan nem I00000 alatti: az I00000-névtér második szegmense
+ * nyelvi pozíció (HU/ENG/...), és egy `CSS`-szerű szegmens alakilag
+ * nyelvkódnak látszana (`/^[A-Z]{2,3}$/`). Az I90000 prefixre a
+ * nyelvi parser (`parseDataName`) rá sem illeszkedik, így a
+ * vezérlőjelek strukturálisan sem keveredhetnek az adattagekkel.
+ */
+export const IDT_CONTROL_PREFIX = 'I90000_IDTOHTMLDATA';
+
+/**
  * Nyelvfüggetlen CSS-választó tag (a stílus nem függ a megjelenítési nyelvtől,
  * a feliratok úgyis az i18n szótárból jönnek):
- * I00000_IDTOHTMLDATA__CSS__<ID>  (pl. I00000_IDTOHTMLDATA__CSS__COMPACT)
+ * I90000_IDTOHTMLDATA__CSS__<ID>  (pl. I90000_IDTOHTMLDATA__CSS__COMPACT)
  * Az <ID> egy `invoice-<id>.css` delta-fájlnak felel meg a styles-könyvtárban
  * (a base invoice-styles.css után töltődik, csak felülírásokat tartalmaz).
  */
-export const IDT_CSS_PREFIX = `${IDT_PREFIX}__CSS__`;
+export const IDT_CSS_PREFIX = `${IDT_CONTROL_PREFIX}__CSS__`;
 
 /**
  * Renderer-lánc tag (nyelvfüggetlen, nem jelenik meg az egyéb adatok között):
- * I00000_IDTOHTMLDATA__RENDERER_INFO
+ * I90000_IDTOHTMLDATA__RENDERER_INFO
  * dataValue példa: "nav-invoicedata-to-html@2.0.4; nav-billing-api@1.0.0"
  * A számla legutolsó soraként, halvány kisbetűs láblécként jelenik meg.
  */
-export const IDT_RENDERER_INFO = `${IDT_PREFIX}__RENDERER_INFO`;
+export const IDT_RENDERER_INFO = `${IDT_CONTROL_PREFIX}__RENDERER_INFO`;
 
 /** Csak fájlnév-biztos azonosító fogadható el (path traversal kizárva). */
 const CSS_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
@@ -108,7 +120,7 @@ export interface SectionedData {
     supplierBlock: DataEntry[];
     customerBlock: DataEntry[];
     other: DataEntry[];
-    /** Renderer-lánc (I00000_IDTOHTMLDATA__RENDERER_INFO), nem az egyéb adatok közé tartozik. */
+    /** Renderer-lánc (I90000_IDTOHTMLDATA__RENDERER_INFO), nem az egyéb adatok közé tartozik. */
     rendererInfo?: DataEntry;
 }
 

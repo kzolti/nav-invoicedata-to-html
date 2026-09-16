@@ -34,3 +34,20 @@ export async function generateInvoiceHtml(xmlData: string, options?: GenerateInv
     const generator = new HtmlGenerator(opts.locale || 'hu', opts.cssConfig);
     return await generator.generate(jsonData);
 }
+
+export interface GenerateInvoiceHtmlFromDataOptions {
+  locale?: string;
+  cssConfig?: CssConfig;
+}
+
+/**
+ * Generate an invoice HTML string from an already-parsed `InvoiceData`
+ * object (no XML parsing, no validation).
+ *
+ * @param data - Parsed NAV OSA `InvoiceData` object.
+ * @param options - Optional locale and CSS config.
+ */
+export async function generateInvoiceHtmlFromData(data: InvoiceData, options?: GenerateInvoiceHtmlFromDataOptions): Promise<string> {
+    const generator = new HtmlGenerator(options?.locale || 'hu', options?.cssConfig);
+    return await generator.generate(data);
+}
