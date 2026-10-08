@@ -1,6 +1,6 @@
 {
   "name": "nav-invoicedata-to-html",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "type": "module",
   "description": "Hungarian NAV Online Invoice (OSA) XML data to HTML viewer and generator.",
   "main": "dist/index.js",
